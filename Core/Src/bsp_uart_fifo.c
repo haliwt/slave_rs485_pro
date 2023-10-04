@@ -1,133 +1,5 @@
-/*
-*********************************************************************************************************
-*
-*	模块名称 : 串口中断+FIFO驱动模块
-*	文件名称 : bsp_uart_fifo.c
-*	版    本 : V1.8
-*	说    明 : 采用串口中断+FIFO模式实现多个串口的同时访问
-*	修改记录 :
-*		版本号  日期       作者    说明
-*		V1.0    2013-02-01 armfly  正式发布
-*		V1.1    2013-06-09 armfly  FiFo结构增加TxCount成员变量，方便判断缓冲区满; 增加 清FiFo的函数
-*		V1.2	2014-09-29 armfly  增加RS485 MODBUS接口。接收到新字节后，直接执行回调函数。
-*		V1.3	2015-07-23 armfly  增加 UART_T 结构的读写指针几个成员变量必须增加 __IO 修饰,否则优化后
-*					会导致串口发送函数死机。
-*		V1.4	2015-08-04 armfly  解决UART4配置bug  GPIO_PinAFConfig(GPIOC, GPIO_PinSource11, GPIO_AF_USART1);
-*		V1.5	2015-10-08 armfly  增加修改波特率的接口函数
-*		V1.6	2018-09-07 armfly  移植到STM32H7平台
-*		V1.7	2018-10-01 armfly  增加 Sending 标志，表示正在发送中
-*		V1.8	2018-11-26 armfly  增加UART8，第8个串口
-*
-*	Copyright (C), 2015-2030, 安富莱电子 www.armfly.com
-*
-*********************************************************************************************************
-*/
-
 #include "bsp.h"
-
-/* 串口1的GPIO  PA9, PA10   RS323 DB9接口 */
-#define USART1_CLK_ENABLE()              __HAL_RCC_USART1_CLK_ENABLE()
-
-#define USART1_TX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOA_CLK_ENABLE()
-#define USART1_TX_GPIO_PORT              GPIOA
-#define USART1_TX_PIN                    GPIO_PIN_9
-#define USART1_TX_AF                     GPIO_AF7_USART1
-
-#define USART1_RX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOA_CLK_ENABLE()
-#define USART1_RX_GPIO_PORT              GPIOA
-#define USART1_RX_PIN                    GPIO_PIN_10
-#define USART1_RX_AF                     GPIO_AF7_USART1
-
-/* 串口2的GPIO --- PA2 PA3  GPS (只用RX。 TX被以太网占用） */
-#define USART2_CLK_ENABLE()              __HAL_RCC_USART2_CLK_ENABLE()
-
-#define USART2_TX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOA_CLK_ENABLE()
-#define USART2_TX_GPIO_PORT              GPIOA
-#define USART2_TX_PIN                    GPIO_PIN_2
-#define USART2_TX_AF                     GPIO_AF7_USART2
-
-#define USART2_RX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOA_CLK_ENABLE()
-#define USART2_RX_GPIO_PORT              GPIOA
-#define USART2_RX_PIN                    GPIO_PIN_3
-#define USART2_RX_AF                     GPIO_AF7_USART2
-
-/* 串口3的GPIO --- PB10 PB11  RS485 */
-#define USART3_CLK_ENABLE()              __HAL_RCC_USART3_CLK_ENABLE()
-
-#define USART3_TX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOB_CLK_ENABLE()
-#define USART3_TX_GPIO_PORT              GPIOB
-#define USART3_TX_PIN                    GPIO_PIN_10
-#define USART3_TX_AF                     GPIO_AF7_USART3
-
-#define USART3_RX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOB_CLK_ENABLE()
-#define USART3_RX_GPIO_PORT              GPIOB
-#define USART3_RX_PIN                    GPIO_PIN_11
-#define USART3_RX_AF                     GPIO_AF7_USART3
-
-/* 串口4的GPIO --- PC10 PC11  被SD卡占用 */
-#define UART4_CLK_ENABLE()              __HAL_RCC_UART4_CLK_ENABLE()
-
-#define UART4_TX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOC_CLK_ENABLE()
-#define UART4_TX_GPIO_PORT              GPIOC
-#define UART4_TX_PIN                    GPIO_PIN_10
-#define UART4_TX_AF                     GPIO_AF8_UART4
-
-#define UART4_RX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOC_CLK_ENABLE()
-#define UART4_RX_GPIO_PORT              GPIOC
-#define UART4_RX_PIN                    GPIO_PIN_11
-#define UART4_RX_AF                     GPIO_AF8_UART4
-
-/* 串口5的GPIO --- PC12/UART5_TX PD2/UART5_RX (被SD卡占用） */
-#define UART5_CLK_ENABLE()              __HAL_RCC_UART5_CLK_ENABLE()
-
-#define UART5_TX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOC_CLK_ENABLE()
-#define UART5_TX_GPIO_PORT              GPIOC
-#define UART5_TX_PIN                    GPIO_PIN_12
-#define UART5_TX_AF                     GPIO_AF8_UART5
-
-#define UART5_RX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOD_CLK_ENABLE()
-#define UART5_RX_GPIO_PORT              GPIOD
-#define UART5_RX_PIN                    GPIO_PIN_2
-#define UART5_RX_AF                     GPIO_AF8_UART5
-
-/* 串口6的GPIO --- PG14 PC7  GPRS */
-#define USART6_CLK_ENABLE()              __HAL_RCC_USART6_CLK_ENABLE()
-
-#define USART6_TX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOG_CLK_ENABLE()
-#define USART6_TX_GPIO_PORT              GPIOG
-#define USART6_TX_PIN                    GPIO_PIN_14
-#define USART6_TX_AF                     GPIO_AF7_USART6
-
-#define USART6_RX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOC_CLK_ENABLE()
-#define USART6_RX_GPIO_PORT              GPIOC
-#define USART6_RX_PIN                    GPIO_PIN_7
-#define USART6_RX_AF                     GPIO_AF7_USART6
-
-/* 串口7的GPIO --- PB4/UART7_TX, PB3/UART7_RX   (被SPI3 占用) */
-#define UART7_CLK_ENABLE()              __HAL_RCC_UART7_CLK_ENABLE()
-
-#define UART7_TX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOB_CLK_ENABLE()
-#define UART7_TX_GPIO_PORT              GPIOB
-#define UART7_TX_PIN                    GPIO_PIN_4
-#define UART7_TX_AF                     GPIO_AF11_UART7
-
-#define UART7_RX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOB_CLK_ENABLE()
-#define UART7_RX_GPIO_PORT              GPIOB
-#define UART7_RX_PIN                    GPIO_PIN_3
-#define UART7_RX_AF                     GPIO_AF11_UART7
-
-/* 串口8的GPIO --- PJ8/UART8_TX, PJ9/UART8_RX   (RGB硬件接口占用) */
-#define UART8_CLK_ENABLE()              __HAL_RCC_UART8_CLK_ENABLE()
-
-#define UART8_TX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOJ_CLK_ENABLE()
-#define UART8_TX_GPIO_PORT              GPIOJ
-#define UART8_TX_PIN                    GPIO_PIN_8
-#define UART8_TX_AF                     GPIO_AF8_UART8
-
-#define UART8_RX_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOJ_CLK_ENABLE()
-#define UART8_RX_GPIO_PORT              GPIOJ
-#define UART8_RX_PIN                    GPIO_PIN_9
-#define UART8_RX_AF                     GPIO_AF8_UART8
+#include "bsp_uart_fifo.h"
 
 /* 定义每个串口结构体变量 */
 #if UART1_FIFO_EN == 1
@@ -153,6 +25,9 @@ static void UartIRQ(UART_T *_pUart);
 
 void RS485_InitTXE(void);
 
+
+
+
 /*
 *********************************************************************************************************
 *	函 数 名: bsp_InitUart
@@ -166,9 +41,9 @@ void bsp_InitUart(void)
 	
 	UartVarInit();		/* 必须先初始化全局变量,再配置硬件 */
 
-	InitHardUart();		/* 配置串口的硬件参数(波特率等) */
+	//InitHardUart();		/* 配置串口的硬件参数(波特率等) */
 
-	RS485_InitTXE();	/* 配置RS485芯片的发送使能硬件，配置为推挽输出 */
+	//RS485_InitTXE();	/* 配置RS485芯片的发送使能硬件，配置为推挽输出 */
 }
 
 /*
@@ -196,6 +71,11 @@ UART_T *ComToUart(COM_PORT_E _ucPort)
 		#else
 			return 0;
 		#endif
+	}
+	else
+	{
+		/* 不做任何处理 */
+		return 0;
 	}
 	
 }
@@ -377,6 +257,7 @@ void comClearRxFifo(COM_PORT_E _ucPort)
 *	返 回 值: 无
 *********************************************************************************************************
 */
+#if 0
 void RS485_InitTXE(void)
 {
 	GPIO_InitTypeDef gpio_init;
@@ -391,7 +272,7 @@ void RS485_InitTXE(void)
 	gpio_init.Pin = RS485_TXEN_PIN;
 	HAL_GPIO_Init(RS485_TXEN_GPIO_PORT, &gpio_init);	
 }
-
+#endif 
 /*
 *********************************************************************************************************
 *	函 数 名: RS485_SetBaud
@@ -445,7 +326,7 @@ void RS485_SendOver(void)
 */
 void RS485_SendBuf(uint8_t *_ucaBuf, uint16_t _usLen)
 {
-	comSendBuf(COM3, _ucaBuf, _usLen);
+	comSendBuf(COM1, _ucaBuf, _usLen);
 }
 
 /*
@@ -469,10 +350,11 @@ void RS485_SendStr(char *_pBuf)
 *	返 回 值: 无
 *********************************************************************************************************
 */
-//extern void MODH_ReciveNew(uint8_t _byte);
+extern void MODS_ReciveNew(uint8_t _byte);
 void RS485_ReciveNew(uint8_t _byte)
 {
-//	MODH_ReciveNew(_byte);
+	
+	MODS_ReciveNew(_byte);
 }
 
 /*
@@ -523,336 +405,7 @@ static void UartVarInit(void)
 
 }
 
-/*
-*********************************************************************************************************
-*	函 数 名: bsp_SetUartParam
-*	功能说明: 配置串口的硬件参数（波特率，数据位，停止位，起始位，校验位，中断使能）适合于STM32- H7开发板
-*	形    参: Instance   USART_TypeDef类型结构体
-*             BaudRate   波特率
-*             Parity     校验类型，奇校验或者偶校验
-*             Mode       发送和接收模式使能
-*	返 回 值: 无
-*********************************************************************************************************
-*/
-//void bsp_SetUartParam(USART_TypeDef *Instance,  uint32_t BaudRate, uint32_t Parity, uint32_t Mode)
-//{
-//  UART_HandleTypeDef UartHandle = {0};	
-//	
-//	/*##-1- 配置串口硬件参数 ######################################*/
-//	/* 异步串口模式 (UART Mode) */
-//	/* 配置如下:
-//	  - 字长    = 8 位
-//	  - 停止位  = 1 个停止位
-//	  - 校验    = 参数Parity
-//	  - 波特率  = 参数BaudRate
-//	  - 硬件流控制关闭 (RTS and CTS signals) */
 
-//	UartHandle.Instance        = Instance;
-
-//	UartHandle.Init.BaudRate   = BaudRate;
-//	UartHandle.Init.WordLength = UART_WORDLENGTH_8B;
-//	UartHandle.Init.StopBits   = UART_STOPBITS_1;
-//	UartHandle.Init.Parity     = Parity;
-//	UartHandle.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
-//	UartHandle.Init.Mode       = Mode;
-//	UartHandle.Init.OverSampling = UART_OVERSAMPLING_16;
-//	UartHandle.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-//	UartHandle.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-//    
-//	if (HAL_UART_Init(&UartHandle) != HAL_OK)
-//	{
-//		Error_Handler(__FILE__, __LINE__);
-//	}
-//}
-
-/*
-*********************************************************************************************************
-*	函 数 名: InitHardUart
-*	功能说明: 配置串口的硬件参数（波特率，数据位，停止位，起始位，校验位，中断使能）适合于STM32-H7开发板
-*	形    参: 无
-*	返 回 值: 无
-*********************************************************************************************************
-*/
-static void InitHardUart(void)
-{
-#if 0
-//	GPIO_InitTypeDef  GPIO_InitStruct;
-//	RCC_PeriphCLKInitTypeDef RCC_PeriphClkInit;
-//	
-//	/* 
-//       下面这个配置可以注释掉，预留下来是为了方便以后选择其它时钟使用 
-//       默认情况下，USART1和USART6选择的PCLK2，时钟100MHz。
-//       USART2，USART3，UART4，UART5，UART6，UART7和UART8选择的时钟是PLCK1，时钟100MHz。
-//    */
-//	RCC_PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART16;
-//	RCC_PeriphClkInit.Usart16ClockSelection = RCC_USART16CLKSOURCE_D2PCLK2;
-//	HAL_RCCEx_PeriphCLKConfig(&RCC_PeriphClkInit);	
-
-//#if UART1_FIFO_EN == 1		/* 串口1 */
-//	/* 使能 GPIO TX/RX 时钟 */
-//	USART1_TX_GPIO_CLK_ENABLE();
-//	USART1_RX_GPIO_CLK_ENABLE();
-//	
-//	/* 使能 USARTx 时钟 */
-//	USART1_CLK_ENABLE();	
-
-//	/* 配置TX引脚 */
-//	GPIO_InitStruct.Pin       = USART1_TX_PIN;
-//	GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
-//	GPIO_InitStruct.Pull      = GPIO_PULLUP;
-//	GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-//	GPIO_InitStruct.Alternate = USART1_TX_AF;
-//	HAL_GPIO_Init(USART1_TX_GPIO_PORT, &GPIO_InitStruct);	
-//	
-//	/* 配置RX引脚 */
-//	GPIO_InitStruct.Pin = USART1_RX_PIN;
-//	GPIO_InitStruct.Alternate = USART1_RX_AF;
-//	HAL_GPIO_Init(USART1_RX_GPIO_PORT, &GPIO_InitStruct);
-
-//	/* 配置NVIC the NVIC for UART */   
-//	HAL_NVIC_SetPriority(USART1_IRQn, 0, 1);
-//	HAL_NVIC_EnableIRQ(USART1_IRQn);
-//  
-//	/* 配置波特率、奇偶校验 */
-//	bsp_SetUartParam(USART1,  UART1_BAUD, UART_PARITY_NONE, UART_MODE_TX_RX);
-
-//	SET_BIT(USART1->ICR, USART_ICR_TCCF);	/* 清除TC发送完成标志 */
-//	SET_BIT(USART1->RQR, USART_RQR_RXFRQ);  /* 清除RXNE接收标志 */
-//	// USART_CR1_PEIE | USART_CR1_RXNEIE
-//	SET_BIT(USART1->CR1, USART_CR1_RXNEIE);	/* 使能PE. RX接受中断 */
-#endif
-
-#if UART2_FIFO_EN == 1		/* 串口2 */
-	/* 使能 GPIO TX/RX 时钟 */
-	USART2_TX_GPIO_CLK_ENABLE();
-	USART2_RX_GPIO_CLK_ENABLE();
-	
-	/* 使能 USARTx 时钟 */
-	USART2_CLK_ENABLE();	
-
-	/* 配置TX引脚 */
-	GPIO_InitStruct.Pin       = USART2_TX_PIN;
-	GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull      = GPIO_PULLUP;
-	GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Alternate = USART2_TX_AF;
-	HAL_GPIO_Init(USART2_TX_GPIO_PORT, &GPIO_InitStruct);	
-	
-	/* 配置RX引脚 */
-	GPIO_InitStruct.Pin = USART2_RX_PIN;
-	GPIO_InitStruct.Alternate = USART2_RX_AF;
-	HAL_GPIO_Init(USART2_RX_GPIO_PORT, &GPIO_InitStruct);
-
-	/* 配置NVIC the NVIC for UART */   
-	HAL_NVIC_SetPriority(USART2_IRQn, 0, 2);
-	HAL_NVIC_EnableIRQ(USART2_IRQn);
-  
-	/* 配置波特率、奇偶校验 */
-	bsp_SetUartParam(USART2,  UART2_BAUD, UART_PARITY_NONE, UART_MODE_RX);	// UART_MODE_TX_RX
-
-	SET_BIT(USART2->ICR, USART_ICR_TCCF);	/* 清除TC发送完成标志 */
-	SET_BIT(USART2->RQR, USART_RQR_RXFRQ);	/* 清除RXNE接收标志 */
-	SET_BIT(USART2->CR1, USART_CR1_RXNEIE);	/* 使能PE. RX接受中断 */
-#endif
-
-#if UART3_FIFO_EN == 1			/* 串口3 */
-	/* 使能 GPIO TX/RX 时钟 */
-	USART3_TX_GPIO_CLK_ENABLE();
-	USART3_RX_GPIO_CLK_ENABLE();
-	
-	/* 使能 USARTx 时钟 */
-	USART3_CLK_ENABLE();	
-
-	/* 配置TX引脚 */
-	GPIO_InitStruct.Pin       = USART3_TX_PIN;
-	GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull      = GPIO_PULLUP;
-	GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Alternate = USART3_TX_AF;
-	HAL_GPIO_Init(USART3_TX_GPIO_PORT, &GPIO_InitStruct);	
-	
-	/* 配置RX引脚 */
-	GPIO_InitStruct.Pin = USART3_RX_PIN;
-	GPIO_InitStruct.Alternate = USART3_RX_AF;
-	HAL_GPIO_Init(USART3_RX_GPIO_PORT, &GPIO_InitStruct);
-
-	/* 配置NVIC the NVIC for UART */   
-	HAL_NVIC_SetPriority(USART3_IRQn, 0, 3);
-	HAL_NVIC_EnableIRQ(USART3_IRQn);
-  
-	/* 配置波特率、奇偶校验 */
-	bsp_SetUartParam(USART3,  UART3_BAUD, UART_PARITY_NONE, UART_MODE_TX_RX);
-
-	SET_BIT(USART3->ICR, USART_ICR_TCCF);	/* 清除TC发送完成标志 */
-	SET_BIT(USART3->RQR, USART_RQR_RXFRQ);/* 清除RXNE接收标志 */
-	SET_BIT(USART3->CR1, USART_CR1_RXNEIE);	/* 使能PE. RX接受中断 */
-#endif
-
-#if UART4_FIFO_EN == 1			/* 串口4 TX = PC10   RX = PC11 */
-	/* 使能 GPIO TX/RX 时钟 */
-	UART4_TX_GPIO_CLK_ENABLE();
-	UART4_RX_GPIO_CLK_ENABLE();
-	
-	/* 使能 USARTx 时钟 */
-	UART4_CLK_ENABLE();	
-
-	/* 配置TX引脚 */
-	GPIO_InitStruct.Pin       = UART4_TX_PIN;
-	GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull      = GPIO_PULLUP;
-	GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Alternate = UART4_TX_AF;
-	HAL_GPIO_Init(UART4_TX_GPIO_PORT, &GPIO_InitStruct);	
-	
-	/* 配置RX引脚 */
-	GPIO_InitStruct.Pin = UART4_RX_PIN;
-	GPIO_InitStruct.Alternate = UART4_RX_AF;
-	HAL_GPIO_Init(UART4_RX_GPIO_PORT, &GPIO_InitStruct);
-
-	/* 配置NVIC the NVIC for UART */   
-	HAL_NVIC_SetPriority(UART4_IRQn, 0, 4);
-	HAL_NVIC_EnableIRQ(UART4_IRQn);
-  
-	/* 配置波特率、奇偶校验 */
-	bsp_SetUartParam(UART4,  UART4_BAUD, UART_PARITY_NONE, UART_MODE_TX_RX);
-
-	SET_BIT(UART4->ICR, USART_ICR_TCCF);	/* 清除TC发送完成标志 */
-	SET_BIT(UART4->RQR, USART_RQR_RXFRQ);/* 清除RXNE接收标志 */
-	SET_BIT(UART4->CR1, USART_CR1_RXNEIE);	/* 使能RX接受中断 */
-#endif
-
-#if UART5_FIFO_EN == 1			/* 串口5 TX = PC12   RX = PD2 */
-	/* 使能 GPIO TX/RX 时钟 */
-	UART5_TX_GPIO_CLK_ENABLE();
-	UART5_RX_GPIO_CLK_ENABLE();
-	
-	/* 使能 USARTx 时钟 */
-	UART5_CLK_ENABLE();	
-
-	/* 配置TX引脚 */
-	GPIO_InitStruct.Pin       = UART5_TX_PIN;
-	GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull      = GPIO_PULLUP;
-	GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Alternate = UART5_TX_AF;
-	HAL_GPIO_Init(UART5_TX_GPIO_PORT, &GPIO_InitStruct);	
-	
-	/* 配置RX引脚 */
-	GPIO_InitStruct.Pin = UART5_RX_PIN;
-	GPIO_InitStruct.Alternate = UART5_RX_AF;
-	HAL_GPIO_Init(UART5_RX_GPIO_PORT, &GPIO_InitStruct);
-
-	/* 配置NVIC the NVIC for UART */   
-	HAL_NVIC_SetPriority(UART5_IRQn, 0, 5);
-	HAL_NVIC_EnableIRQ(UART5_IRQn);
-  
-	/* 配置波特率、奇偶校验 */
-	bsp_SetUartParam(UART5,  UART5_BAUD, UART_PARITY_NONE, UART_MODE_TX_RX);
-
-	SET_BIT(UART5->ICR, USART_ICR_TCCF);	/* 清除TC发送完成标志 */
-	SET_BIT(UART5->RQR, USART_RQR_RXFRQ);/* 清除RXNE接收标志 */
-	SET_BIT(UART5->CR1, USART_CR1_RXNEIE);	/* 使能RX接受中断 */
-#endif
-
-#if UART6_FIFO_EN == 1			/* USART6 */
-	/* 使能 GPIO TX/RX 时钟 */
-	USART6_TX_GPIO_CLK_ENABLE();
-	USART6_RX_GPIO_CLK_ENABLE();
-	
-	/* 使能 USARTx 时钟 */
-	USART6_CLK_ENABLE();	
-
-	/* 配置TX引脚 */
-	GPIO_InitStruct.Pin       = USART6_TX_PIN;
-	GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull      = GPIO_PULLUP;
-	GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Alternate = USART6_TX_AF;
-	HAL_GPIO_Init(USART6_TX_GPIO_PORT, &GPIO_InitStruct);	
-	
-	/* 配置RX引脚 */
-	GPIO_InitStruct.Pin = USART6_RX_PIN;
-	GPIO_InitStruct.Alternate = USART6_RX_AF;
-	HAL_GPIO_Init(USART6_RX_GPIO_PORT, &GPIO_InitStruct);
-
-	/* 配置NVIC the NVIC for UART */   
-	HAL_NVIC_SetPriority(USART6_IRQn, 0, 6);
-	HAL_NVIC_EnableIRQ(USART6_IRQn);
-	
-	/* 配置波特率、奇偶校验 */
-	bsp_SetUartParam(USART6,  UART6_BAUD, UART_PARITY_NONE, UART_MODE_TX_RX);
-
-	SET_BIT(USART6->ICR, USART_ICR_TCCF);	/* 清除TC发送完成标志 */
-	SET_BIT(USART6->RQR, USART_RQR_RXFRQ);/* 清除RXNE接收标志 */
-	SET_BIT(USART6->CR1, USART_CR1_RXNEIE);	/* 使能PE. RX接受中断 */
-#endif
-
-#if UART7_FIFO_EN == 1			/* UART7 */
-	/* 使能 GPIO TX/RX 时钟 */
-	UART7_TX_GPIO_CLK_ENABLE();
-	UART7_RX_GPIO_CLK_ENABLE();
-	
-	/* 使能 USARTx 时钟 */
-	UART7_CLK_ENABLE();	
-
-	/* 配置TX引脚 */
-	GPIO_InitStruct.Pin       = UART7_TX_PIN;
-	GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull      = GPIO_PULLUP;
-	GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Alternate = UART7_TX_AF;
-	HAL_GPIO_Init(UART7_TX_GPIO_PORT, &GPIO_InitStruct);	
-	
-	/* 配置RX引脚 */
-	GPIO_InitStruct.Pin = UART7_RX_PIN;
-	GPIO_InitStruct.Alternate = UART7_RX_AF;
-	HAL_GPIO_Init(UART7_RX_GPIO_PORT, &GPIO_InitStruct);
-
-	/* 配置NVIC the NVIC for UART */   
-	HAL_NVIC_SetPriority(UART7_IRQn, 0, 6);
-	HAL_NVIC_EnableIRQ(UART7_IRQn);
-	
-	/* 配置波特率、奇偶校验 */
-	bsp_SetUartParam(UART7,  UART7_BAUD, UART_PARITY_NONE, UART_MODE_TX_RX);
-
-	SET_BIT(UART7->ICR, USART_ICR_TCCF);	/* 清除TC发送完成标志 */
-	SET_BIT(UART7->RQR, USART_RQR_RXFRQ);	/* 清除RXNE接收标志 */
-	SET_BIT(UART7->CR1, USART_CR1_RXNEIE);	/* 使能PE. RX接受中断 */
-#endif
-
-#if UART8_FIFO_EN == 1			/* UART8 */
-	/* 使能 GPIO TX/RX 时钟 */
-	UART8_TX_GPIO_CLK_ENABLE();
-	UART7_RX_GPIO_CLK_ENABLE();
-	
-	/* 使能 USARTx 时钟 */
-	UART8_CLK_ENABLE();	
-
-	/* 配置TX引脚 */
-	GPIO_InitStruct.Pin       = UART8_TX_PIN;
-	GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull      = GPIO_PULLUP;
-	GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Alternate = UART8_TX_AF;
-	HAL_GPIO_Init(UART8_TX_GPIO_PORT, &GPIO_InitStruct);	
-	
-	/* 配置RX引脚 */
-	GPIO_InitStruct.Pin = UART8_RX_PIN;
-	GPIO_InitStruct.Alternate = UART8_RX_AF;
-	HAL_GPIO_Init(UART8_RX_GPIO_PORT, &GPIO_InitStruct);
-
-	/* 配置NVIC the NVIC for UART */   
-	HAL_NVIC_SetPriority(UART8_IRQn, 0, 6);
-	HAL_NVIC_EnableIRQ(UART8_IRQn);
-	
-	/* 配置波特率、奇偶校验 */
-	bsp_SetUartParam(UART8,  UART8_BAUD, UART_PARITY_NONE, UART_MODE_TX_RX);
-	
-	SET_BIT(UART8->ICR, USART_ICR_TCCF);	/* 清除TC发送完成标志 */
-	SET_BIT(UART8->RQR, USART_RQR_RXFRQ);	/* 清除RXNE接收标志 */
-	SET_BIT(UART8->CR1, USART_CR1_RXNEIE);	/* 使能PE. RX接受中断 */
-#endif
-}
 
 /*
 *********************************************************************************************************
@@ -1220,4 +773,4 @@ int fgetc(FILE *f)
 #endif
 }
 
-/***************************** 安富莱电子 www.armfly.com (END OF FILE) *********************************/
+

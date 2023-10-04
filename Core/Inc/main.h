@@ -57,16 +57,21 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define RS485_TEXEN_Pin GPIO_PIN_2
-#define RS485_TEXEN_GPIO_Port GPIOA
-#define TEMPERATURE_SIGNAL_Pin GPIO_PIN_3
-#define TEMPERATURE_SIGNAL_GPIO_Port GPIOA
-#define MOTOR_CONTROL_1_Pin GPIO_PIN_7
-#define MOTOR_CONTROL_1_GPIO_Port GPIOA
-#define PLASMA_SIGNAL_Pin GPIO_PIN_11
-#define PLASMA_SIGNAL_GPIO_Port GPIOA
-#define RELAY_SIGNAL_Pin GPIO_PIN_12
-#define RELAY_SIGNAL_GPIO_Port GPIOA
+#define RS485_TEXEN_Pin 				GPIO_PIN_2
+#define RS485_TEXEN_GPIO_Port 			GPIOA
+
+
+#define TEMPERATURE_SIGNAL_Pin 			GPIO_PIN_3
+#define TEMPERATURE_SIGNAL_GPIO_Port 	GPIOA
+
+#define MOTOR_CONTROL_1_Pin 			GPIO_PIN_7
+#define MOTOR_CONTROL_1_GPIO_Port 		GPIOA
+
+#define PLASMA_SIGNAL_Pin 				GPIO_PIN_11
+#define PLASMA_SIGNAL_GPIO_Port 		GPIOA
+
+#define RELAY_SIGNAL_Pin 				GPIO_PIN_12
+#define RELAY_SIGNAL_GPIO_Port 			GPIOA
 
 /* USER CODE BEGIN Private defines */
 

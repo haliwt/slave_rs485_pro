@@ -1,33 +1,16 @@
-/*
-*********************************************************************************************************
-*
-*	模块名称 : BSP模块(For STM32H7)
-*	文件名称 : bsp.h
-*	版    本 : V1.0
-*	说    明 : 这是硬件底层驱动程序的主文件。每个c文件可以 #include "bsp.h" 来包含所有的外设驱动模块。
-*			   bsp = Borad surport packet 板级支持包
-*	修改记录 :
-*		版本号  日期         作者       说明
-*		V1.0    2018-07-29  Eric2013   正式发布
-*
-*	Copyright (C), 2018-2030, 安富莱电子 www.armfly.com
-*
-*********************************************************************************************************
-*/
-
 #ifndef _BSP_H_
 #define _BSP_H
 
-#define STM32_V7    
+#define STM32G030F6      
 
 
 /* 检查是否定义了开发板型号 */
-#if !defined (STM32_V7)
-	#error "Please define the board model : STM32_V7"
+#if !defined (STM32G030F6)
+	#error "Please define the board model : STM32G030F6_V1"
 #endif
 
 /* 定义 BSP 版本号 */
-#define __STM32H7_BSP_VERSION		"1.1"
+#define __STM32G030_BSP_VERSION		"1.1"
 
 /* CPU空闲时执行的函数 */
 //#define CPU_IDLE()		bsp_Idle()
@@ -73,6 +56,8 @@
 #include "bsp_msg.h"
 #include "bsp_uart_fifo.h"
 #include "usart.h"
+#include "modbus_slave.h"
+#include "bsp_user_lib.h"
 
 
 
@@ -89,4 +74,3 @@ void bsp_GetCpuID(uint32_t *_id);
 extern void SystemClock_Config(void);
 #endif
 
-/***************************** 安富莱电子 www.armfly.com (END OF FILE) *********************************/
