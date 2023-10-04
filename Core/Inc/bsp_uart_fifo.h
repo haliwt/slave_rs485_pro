@@ -12,6 +12,7 @@
 
 #ifndef _BSP_USART_FIFO_H_
 #define _BSP_USART_FIFO_H_
+#include "main.h"
 
 /*
 	安富莱STM32-V7 串口分配：
@@ -42,12 +43,7 @@
 
 #define	UART1_FIFO_EN	1
 #define	UART2_FIFO_EN	0
-#define	UART3_FIFO_EN	1
-#define	UART4_FIFO_EN	0
-#define	UART5_FIFO_EN	0
-#define	UART6_FIFO_EN	0
-#define	UART7_FIFO_EN	0
-#define	UART8_FIFO_EN	0
+
 
 /* PB2 控制RS485芯片的发送使能 */
 #define RS485_TXEN_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOB_CLK_ENABLE()
@@ -151,10 +147,10 @@ uint8_t comGetChar(COM_PORT_E _ucPort, uint8_t *_pByte);
 void comSendBuf(COM_PORT_E _ucPort, uint8_t *_ucaBuf, uint16_t _usLen);
 void comClearTxFifo(COM_PORT_E _ucPort);
 void comClearRxFifo(COM_PORT_E _ucPort);
-void comSetBaud(COM_PORT_E _ucPort, uint32_t _BaudRate);
+//void comSetBaud(COM_PORT_E _ucPort, uint32_t _BaudRate);
 
-void USART_SetBaudRate(USART_TypeDef* USARTx, uint32_t BaudRate);
-void bsp_SetUartParam(USART_TypeDef *Instance,  uint32_t BaudRate, uint32_t Parity, uint32_t Mode);
+//void USART_SetBaudRate(USART_TypeDef* USARTx, uint32_t BaudRate);
+//void bsp_SetUartParam(USART_TypeDef *Instance,  uint32_t BaudRate, uint32_t Parity, uint32_t Mode);
 
 void RS485_SendBuf(uint8_t *_ucaBuf, uint16_t _usLen);
 void RS485_SendStr(char *_pBuf);
