@@ -13,6 +13,7 @@
 #include "bsp.h"
 #include "modbus_slave.h"
 
+MAINBOARD_T g_tMain;
 
 /*
 *********************************************************************************************************
@@ -73,6 +74,8 @@ const MODBUSBPS_T ModbusBaudRate[] =
 	{230400, 1750},
 };
 
+static MODS_Read_Slave_Address_Info(void); //MODS -> Modbus - slave machine ,MODH--> host machine
+
 static uint8_t g_mods_timeout = 0;
 MODS_T g_tModS = {0};
 VAR_T g_tVar;
@@ -91,14 +94,14 @@ void MODS_Poll(void)
 	uint16_t crc1;
 	
 	/* ³¬¹ý3.5¸ö×Ö·ûÊ±¼äºóÖ´ÐÐMODH_RxTimeOut()º¯Êý¡£È«¾Ö±äÁ¿ g_rtu_timeout = 1; Í¨ÖªÖ÷³ÌÐò¿ªÊ¼½âÂë */
-	if (g_mods_timeout == 0)	
-	{
-		return;								/* Ã»ÓÐ³¬Ê±£¬¼ÌÐø½ÓÊÕ¡£²»ÒªÇåÁã g_tModS.RxCount */
-	}
-	
-	g_mods_timeout = 0;	 					/* Çå±êÖ¾ */
+//	if (g_mods_timeout == 0)	
+//	{
+//		return;								/* Ã»ÓÐ³¬Ê±£¬¼ÌÐø½ÓÊÕ¡£²»ÒªÇåÁã g_tModS.RxCount */
+//	}
+//	
+//	g_mods_timeout = 0;	 					/* Çå±êÖ¾ */
 
-	if (g_tModS.RxCount < 4)				/* ½ÓÊÕµ½µÄÊý¾ÝÐ¡ÓÚ4¸ö×Ö½Ú¾ÍÈÏÎª´íÎó£¬µØÖ·£¨8bit£©+Ö¸Áî£¨8bit£©+²Ù×÷¼Ä´æÆ÷£¨16bit£© */
+	if (g_tModS.RxCount < 7)				/* ½ÓÊÕµ½µÄÊý¾ÝÐ¡ÓÚ4¸ö×Ö½Ú¾ÍÈÏÎª´íÎó£¬µØÖ·£¨8bit£©+Ö¸Áî£¨8bit£©+²Ù×÷¼Ä´æÆ÷£¨16bit£© */
 	{
 		goto err_ret;
 	}
@@ -112,7 +115,7 @@ void MODS_Poll(void)
 
 	/* Õ¾µØÖ· (1×Ö½Ú£© */
 	addr = g_tModS.RxBuf[0];				/* µÚ1×Ö½Ú Õ¾ºÅ */
-	if (addr != SADDR485)		 			/* ÅÐ¶ÏÖ÷»ú·¢ËÍµÄÃüÁîµØÖ·ÊÇ·ñ·ûºÏ */
+	if (addr != MASTER_ADDRESS && addr !=0)		 			/* ÅÐ¶ÏÖ÷»ú·¢ËÍµÄÃüÁîµØÖ·ÊÇ·ñ·ûºÏ */
 	{
 		goto err_ret;
 	}
@@ -244,13 +247,14 @@ static void MODS_SendAckOk(void)
 *	·µ »Ø Öµ: ÎÞ
 *********************************************************************************************************
 */
+#if 0
 static void MODS_AnalyzeApp(void)
 {
 	switch (g_tModS.RxBuf[1])				/* µÚ2¸ö×Ö½Ú ¹¦ÄÜÂë */
 	{
 		case 0x01:							/* ¶ÁÈ¡ÏßÈ¦×´Ì¬£¨´ËÀý³ÌÓÃled´úÌæ£©*/
 			MODS_01H();
-			//bsp_PutMsg(MSG_MODS_01H, 0);	/* ·¢ËÍÏûÏ¢,Ö÷³ÌÐò´¦Àí */
+			bsp_PutMsg(MSG_MODS_01H, 0);	/* ·¢ËÍÏûÏ¢,Ö÷³ÌÐò´¦Àí */
 			break;
 
 		case 0x02:							/* ¶ÁÈ¡ÊäÈë×´Ì¬£¨°´¼ü×´Ì¬£©*/
@@ -288,6 +292,168 @@ static void MODS_AnalyzeApp(void)
 			MODS_SendAckErr(g_tModS.RspCode);	/* ¸æËßÖ÷»úÃüÁî´íÎó */
 			break;
 	}
+}
+#endif
+static void MODS_AnalyzeApp(void)
+{
+
+  MODS_Read_Slave_Address_Info();
+
+
+}
+/*
+*********************************************************************************************************
+*	º¯ Êý Ãû: MODS_01H
+*	¹¦ÄÜËµÃ÷: ¶ÁÈ¡ÏßÈ¦×´Ì¬£¨¶ÔÓ¦Ô¶³Ì¿ª¹ØD01/D02/D03£©
+*	ÐÎ    ²Î: ÎÞ
+*	·µ »Ø Öµ: ÎÞ
+*********************************************************************************************************
+*/
+static MODS_Read_Slave_Address_Info(void)
+{
+    uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data,fun_byte;
+
+
+	  
+	   bytes_zero = g_tModS.RxBuf[0];	/* 0x00 å¹¿æ’­æ¨¡å¼ */
+	   byte_load_addr = g_tModS.RxBuf[1]; /* ä¸»æœº  åœ°å€   0x01*/
+	   byte_fun_code = g_tModS.RxBuf[2];
+	   byte_len = g_tModS.RxBuf[3];
+	   byte_data = g_tModS.RxBuf[4];
+
+	 if(bytes_zero == 0 ){
+
+	   	Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
+	   
+	   
+	  
+		switch (byte_fun_code)
+		{
+			case mod_power: //0x0101
+				
+				switch(byte_data){
+
+                   case 0:
+                       g_tMain.gPower_On = power_off;
+				      
+				       
+				      
+				   break;
+
+				   case 1:
+				      g_tMain.gPower_On = power_on;
+					 
+
+				   break;
+
+				}	
+					
+				g_tModS.fAck01H = 1;
+				
+			break;
+
+			case mod_ptc:
+
+			   if(g_tMain.gPower_On == power_on){
+			  
+			   switch(byte_data){
+
+                   case 0:
+                      g_tMain.gPtc = 0;
+			         
+				   break;
+
+				   case 1:
+				      
+					 g_tMain.gPtc = 1;
+					 
+				   break;
+
+				}	
+                g_tModS.fAck02H = 1;
+			   }
+			break;
+
+			case mod_plasma:
+
+				 if(g_tMain.gPower_On == power_on){
+			   
+			     switch(byte_data){
+
+                   case 0:
+                  g_tMain.gPlasma=0; 
+				    
+				   break;
+
+				   case 1:
+				      
+				    g_tMain.gPlasma=1;
+					
+
+				   break;
+
+				}	
+                g_tModS.fAck03H = 1;
+				}
+
+			break;
+
+			case mod_ulrasonic:
+
+			    if(g_tMain.gPower_On == power_on){
+				
+				 switch(byte_data){
+
+                   case 0:
+                       g_tMain.gUltrasonic = 0;
+				     
+				   break;
+
+				   case 1:
+				     g_tMain.gUltrasonic = 1;
+					 
+				   
+
+				   break;
+
+				}	
+                g_tModS.fAck04H = 1;
+
+			   }
+
+			break;
+
+			
+	    }
+		
+	}
+ }
+
+/********************************************************************************
+	**
+	*Function Name:
+	*Function :UART callback function  for UART interrupt for transmit data
+	*Input Ref: structure UART_HandleTypeDef pointer
+	*Return Ref:NO
+	*
+*******************************************************************************/
+void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t data)
+{
+	g_tModS.TxCount = 0;
+	g_tModS.TxBuf[g_tModS.TxCount++] = 0x0;		/* å¹¿æ’­æ¨¡å¼ */
+	g_tModS.TxBuf[g_tModS.TxCount++] = MASTER_ADDRESS;  /* åº”ç­”åœ°å€ */
+	g_tModS.TxBuf[g_tModS.TxCount++] = fun_code;		/* åŠŸèƒ½ç  ç­‰ç¦»å­å¼€æˆ–è€…å…³é—­ */	
+	g_tModS.TxBuf[g_tModS.TxCount++] = len;	/* æ•°æ®é•¿åº¦*/
+	g_tModS.TxBuf[g_tModS.TxCount++] = data;		/* æ•°æ® */
+	
+	//MODS_SendAckWithCRC();		/* å‘é€æ•°æ®ï¼Œè‡ªåŠ¨åŠ CRC */
+	MODS_SendWithCRC(g_tModS.TxBuf, g_tModS.TxCount);
+	
+	//g_tModH.RegNum = _num;		/* å¯„å­˜å™¨ä¸ªæ•° */
+	//g_tModH.Reg02H = _reg;		/* ä¿å­˜02HæŒ‡ä»¤ä¸­çš„å¯„å­˜å™¨åœ°å€ï¼Œæ–¹ä¾¿å¯¹åº”ç­”æ•°æ®è¿›è¡Œåˆ†ç±» */	
+
+
+
 }
 
 /*

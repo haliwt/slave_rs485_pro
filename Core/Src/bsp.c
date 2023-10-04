@@ -1,5 +1,6 @@
 #include "bsp.h"
 
+CPUID cpuId;
 
 
 /*
@@ -26,6 +27,37 @@
 *	返 回 值: 无
 *********************************************************************************************************
 */
+
+void bsp_GetCpuID(void)
+{
+  static uint8_t id;
+ /* 妫�娴婥PU ID */
+	{
+		uint32_t CPU_Sn0, CPU_Sn1, CPU_Sn2;
+		
+		CPU_Sn0 = *(__IO uint32_t*)(UID_BASE); //(0x1FFF7590);
+		CPU_Sn1 = *(__IO uint32_t*)(UID_BASE+ 4U);
+		CPU_Sn2 = *(__IO uint32_t*)(UID_BASE + 8U);
+
+		//printf("CPU : STM32H743XIH6, BGA240, 涓婚: %dMHz\r\n", SystemCoreClock / 1000000);
+		//printf("UID = %08X %08X %08X\r\n", CPU_Sn2, CPU_Sn1, CPU_Sn0);
+	}
+//  cpuId.cpu_id_one =(uint8_t)CPU_Sn0;
+//  cpuId.cpu_id_two =(uint8_t)CPU_Sn1;
+//	cpuId.cpu_id_three =(uint8_t)CPU_Sn2;
+    id = (uint8_t)CPU_Sn0 + (uint8_t)CPU_Sn1 + (uint8_t)CPU_Sn2;
+
+   if(id ==0){
+
+	   id = (uint8_t)CPU_Sn0 + (uint8_t)CPU_Sn1 +(uint8_t)(CPU_Sn2 >> 8);
+
+   }
+
+   if(id ==0) id = 10;
+
+	cpuId.slave_address = id;
+}
+
 
 
 /*
@@ -75,7 +107,7 @@ void bsp_Idle(void)
 	//GUI_Exec();
 
 	/* 例如 uIP 协议，可以插入uip轮询函数 */
-	//TOUCH_CapScan();
+    MODS_Poll();
 }
 
 /*

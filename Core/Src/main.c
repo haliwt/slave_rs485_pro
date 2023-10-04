@@ -70,6 +70,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	MSG_T ucMsg;
+    static uint8_t cupid_times;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -109,7 +110,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  bsp_Idle(); /* Modbus解析在此函数里面 */
+	if(cupid_times==0){
+	  cupid_times++;
+	  bsp_GetCpuID();
+
+	}
+
+	bsp_Idle(); /* Modbus解析在此函数里面 */
 		
 		if (bsp_GetMsg(&ucMsg))
 		{

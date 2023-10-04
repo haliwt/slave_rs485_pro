@@ -1,21 +1,8 @@
-/*
-*********************************************************************************************************
-*
-*	模块名称 : 消息处理模块
-*	文件名称 : bsp_msg.h
-*	版    本 : V1.0
-*	说    明 : 头文件
-*
-*	Copyright (C), 2013-2014, 安富莱电子 www.armfly.com
-*
-*********************************************************************************************************
-*/
-
 #ifndef __BSP_MSG_H
 #define __BSP_MSG_H
 #include "main.h"
 
-#define MSG_FIFO_SIZE    40	   		/* 消息个数 */
+#define MSG_FIFO_SIZE    20//40	   		/* 锟斤拷息锟斤拷锟斤拷 */
 
 enum 
 {
@@ -30,23 +17,23 @@ enum
 	MSG_MODS_10H,
 };
 
-/* 按键FIFO用到变量 */
+/* 锟斤拷锟斤拷FIFO锟矫碉拷锟斤拷锟斤拷 */
 typedef struct
 {
-	uint16_t MsgCode;		/* 消息代码 */
-	uint32_t MsgParam;		/* 消息的数据体, 也可以是指针（强制转化） */
+	uint16_t MsgCode;		/* 锟斤拷息锟斤拷锟斤拷 */
+	uint32_t MsgParam;		/* 锟斤拷息锟斤拷锟斤拷锟斤拷锟斤拷, 也锟斤拷锟斤拷锟斤拷指锟诫（强锟斤拷转锟斤拷锟斤拷 */
 }MSG_T;
 
-/* 按键FIFO用到变量 */
+/* 锟斤拷锟斤拷FIFO锟矫碉拷锟斤拷锟斤拷 */
 typedef struct
 {
-	MSG_T Buf[MSG_FIFO_SIZE];	/* 消息缓冲区 */
-	uint8_t Read;					/* 缓冲区读指针1 */
-	uint8_t Write;					/* 缓冲区写指针 */
-	uint8_t Read2;					/* 缓冲区读指针2 */
+	MSG_T Buf[MSG_FIFO_SIZE];	/* 锟斤拷息锟斤拷锟斤拷锟斤拷 */
+	uint8_t Read;					/* 锟斤拷锟斤拷锟斤拷锟斤拷指锟斤拷1 */
+	uint8_t Write;					/* 锟斤拷锟斤拷锟斤拷写指锟斤拷 */
+	uint8_t Read2;					/* 锟斤拷锟斤拷锟斤拷锟斤拷指锟斤拷2 */
 }MSG_FIFO_T;
 
-/* 供外部调用的函数声明 */
+/* 锟斤拷锟解部锟斤拷锟矫的猴拷锟斤拷锟斤拷锟斤拷 */
 void bsp_InitMsg(void);
 void bsp_PutMsg(uint16_t _MsgCode, uint32_t _MsgParam);
 uint8_t bsp_GetMsg(MSG_T *_pMsg);
@@ -55,4 +42,4 @@ void bsp_ClearMsg(void);
 
 #endif
 
-/***************************** 安富莱电子 www.armfly.com (END OF FILE) *********************************/
+

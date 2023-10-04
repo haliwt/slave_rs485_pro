@@ -59,8 +59,15 @@
 #include "modbus_slave.h"
 #include "bsp_user_lib.h"
 
+typedef struct _cpuId_{
 
+   uin8_t cpu_id;
+   uin8_t slave_address;
+  
 
+}CPUID;
+
+extern CPUID cpuId;
 
 
 

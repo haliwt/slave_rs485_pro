@@ -2,8 +2,9 @@
 #define __MODBUY_SLAVE_H
 #include "main.h"
 
-#define SADDR485	1
-#define SBAUD485	UART3_BAUD
+#define MASTER_ADDRESS 	0x01
+
+#define SBAUD485	UART1_BAUD
 
 /* 01H 读强制单线圈 */
 /* 05H 写强制单线圈 */
@@ -32,13 +33,14 @@
 
 /* RTU 应答代码 */
 #define RSP_OK				0		/* 成功 */
-#define RSP_ERR_CMD			0x01	/* 不支持的功能码 */
-#define RSP_ERR_REG_ADDR	0x02	/* 寄存器地址错误 */
-#define RSP_ERR_VALUE		0x03	/* 数据值域错误 */
-#define RSP_ERR_WRITE		0x04	/* 写入失败 */
+#define RSP_ERR_CRC_CHECK   0x01	/* crc16 ceck code is error */
+#define RSP_ERR_CMD			0x02	/* 不支持的功能码 */
+#define RSP_ERR_REG_ADDR	0x03	/* 寄存器地址错误 */
+#define RSP_ERR_VALUE		0x04	/* 数据值域错误 */
+#define RSP_ERR_WRITE		0x05	/* 写入失败 */
 
 #define S_RX_BUF_SIZE		30
-#define S_TX_BUF_SIZE		128
+#define S_TX_BUF_SIZE		20
 
 typedef struct
 {
@@ -70,14 +72,63 @@ typedef struct
 
 }VAR_T;
 
+typedef struct {
+
+    uint8_t gPower_On;
+	uint8_t gFan_continueRun;
+	uint8_t  gFan_counter;
+	uint8_t gTimer_fan_adc_times;
+	uint8_t gFan_level;
+
+	//adc 
+	uint8_t ADC_channel_No;
+
+	uint8_t  gPlasma;
+    uint8_t  gPtc;
+    uint8_t  gUltrasonic;
+
+	uint8_t  gTemperature;
+    uint8_t  gHumidity;
+
+	//fault 
+	uint8_t fan_warning ;
+	uint8_t ptc_warning;
+
+
+}MAINBOARD_T;
+
+
+typedef enum {
+
+  mod_power =0x01,
+  mod_ptc,
+  mod_plasma,
+  mod_ulrasonic,
+  mod_fan,
+  mod_set_timer_power_on,
+  mod_set_timer_power_off,
+  mod_set_temperature_value,
+  mod_fan_error,
+  mod_ptc_error,
+   
+}_mod_fun;
+
+typedef enum{
+  
+  power_off,
+  power_on,
+
+
+}power_state;
+
+
 void MODS_Poll(void);
-
-
-
-
-
 extern MODS_T g_tModS;
 extern VAR_T g_tVar;
+extern MAINBOARD_T g_tMain;
+
+void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t data);
+
 #endif
 
 
