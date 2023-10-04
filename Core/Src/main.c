@@ -69,7 +69,7 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	MSG_T ucMsg;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -109,6 +109,20 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  bsp_Idle(); /* Modbus解析在此函数里面 */
+		
+		if (bsp_GetMsg(&ucMsg))
+		{
+			switch (ucMsg.MsgCode)
+			{
+				case MSG_MODS_05H:		/* 打印 发送的命令 和 应答的命令  刷新LED状态 */
+					//SetLed();			/* 设置LED亮灭(处理05H指令) */
+					break;
+				
+				default:
+					break;
+			}
+		}
   }
   /* USER CODE END 3 */
 }

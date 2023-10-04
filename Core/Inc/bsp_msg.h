@@ -13,6 +13,7 @@
 
 #ifndef __BSP_MSG_H
 #define __BSP_MSG_H
+#include "main.h"
 
 #define MSG_FIFO_SIZE    40	   		/* 消息个数 */
 
@@ -20,13 +21,13 @@ enum
 {
 	MSG_NONE = 0,
 	
-	MSG_485_RX_RTU,		/* 接收到RS485 MODBUS RTU数据包*/
-	MSG_485_RX_NOT_RTU,	/* 接收到RS485数据包，CRC未过 */
-	
-	MSG_CAN1_RX,		/* 收到CAN1数据包。can_netword.c 中引用 */
-	MSG_CAN2_RX,		/* 收到CAN2数据包。can_netword.c 中引用 */
-	
-	MSG_WM8978_DMA_END,	/* DMA传输结束 */
+	MSG_MODS_01H,
+	MSG_MODS_02H,
+	MSG_MODS_03H,
+	MSG_MODS_04H,
+	MSG_MODS_05H,
+	MSG_MODS_06H,
+	MSG_MODS_10H,
 };
 
 /* 按键FIFO用到变量 */

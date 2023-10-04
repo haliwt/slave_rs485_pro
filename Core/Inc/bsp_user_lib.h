@@ -11,6 +11,7 @@
 
 #ifndef __BSP_USER_LIB_H
 #define __BSP_USER_LIB_H
+#include "main.h"
 
 int str_len(char *_str);
 void str_cpy(char *_tar, char *_src);
