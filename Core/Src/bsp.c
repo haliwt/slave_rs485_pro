@@ -43,10 +43,7 @@ void bsp_GetCpuID(void)
 		//printf("CPU : STM32H743XIH6, BGA240, 主频: %dMHz\r\n", SystemCoreClock / 1000000);
 		//printf("UID = %08X %08X %08X\r\n", CPU_Sn2, CPU_Sn1, CPU_Sn0);
 	
-//  cpuId.cpu_id_one =(uint8_t)CPU_Sn0;
-//  cpuId.cpu_id_two =(uint8_t)CPU_Sn1;
-//	cpuId.cpu_id_three =(uint8_t)CPU_Sn2;
-   
+
 
    do{
    	 i++;

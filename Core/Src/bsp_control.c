@@ -1,4 +1,4 @@
-#include "control.h"
+#include "bsp_control.h"
 #include "bsp.h"
 
 /*****************************************************************

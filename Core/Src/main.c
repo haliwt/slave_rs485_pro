@@ -100,6 +100,7 @@ int main(void)
   MX_TIM14_Init();
   MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
+   delay_init(24);
    bsp_InitUart();
   /* USER CODE END 2 */
 
@@ -119,18 +120,7 @@ int main(void)
 	bsp_Idle(); /* Modbus解析在此函数里面 */
 	Mainboard_Run_Process_Handler();
 		
-		if (bsp_GetMsg(&ucMsg))
-		{
-			switch (ucMsg.MsgCode)
-			{
-				case MSG_MODS_05H:		/* 打印 发送的命令 和 应答的命令  刷新LED状态 */
-					//SetLed();			/* 设置LED亮灭(处理05H指令) */
-					break;
-				
-				default:
-					break;
-			}
-		}
+		
   }
   /* USER CODE END 3 */
 }

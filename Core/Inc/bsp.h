@@ -58,7 +58,8 @@
 #include "usart.h"
 #include "modbus_slave.h"
 #include "bsp_user_lib.h"
-#include "control.h"
+#include "bsp_control.h"
+#include "delay.h"
 
 typedef struct _cpuId_{
 

@@ -3,7 +3,14 @@
 #include "main.h"
 
 
-#
+#define PTC_IO_SetHigh()       HAL_GPIO_WritePin(RELAY_SIGNAL_GPIO_Port,RELAY_SIGNAL_Pin,GPIO_PIN_SET)
+#define PTC_IO_SetLow()        HAL_GPIO_WritePin(RELAY_SIGNAL_GPIO_Port,RELAY_SIGNAL_Pin,GPIO_PIN_RESET)
+
+#define PLASMA_IO_SetHigh()		HAL_GPIO_WritePin(PLASMA_SIGNAL_GPIO_Port,PLASMA_SIGNAL_Pin ,GPIO_PIN_SET)
+#define PLASMA_IO_SetLow()		HAL_GPIO_WritePin(PLASMA_SIGNAL_GPIO_Port,PLASMA_SIGNAL_Pin ,GPIO_PIN_RESET)
+
+//#define ULTRASONIC_IO_SetHigh()		HAL_GPIO_WritePin(PLASMA_SIGNAL_GPIO_Port,PLASMA_SIGNAL_Pin ,GPIO_PIN_SET)
+//#define ULTRASONIC_IO_SetLow();
 
 typedef struct {
 
@@ -34,6 +41,7 @@ extern MAINBOARD_T g_tMain;
 
 
 void Mainboard_Run_Process_Handler(void);
+
 
 
 
