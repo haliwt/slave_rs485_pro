@@ -1,15 +1,3 @@
-/*
-*********************************************************************************************************
-*
-*	模块名称 : MODS通信模块. 从站模式【原创】
-*	文件名称 : modbus_slave.c
-*	版    本 : V1.5
-*	说    明 : 头文件
-*
-*	Copyright (C), 2020-2030, 安富莱电子 www.armfly.com
-*
-*********************************************************************************************************
-*/
 #include "bsp.h"
 #include "modbus_slave.h"
 
@@ -21,23 +9,23 @@ MAINBOARD_T g_tMain;
 *********************************************************************************************************
 */
 static void MODS_SendWithCRC(uint8_t *_pBuf, uint8_t _ucLen);
-static void MODS_SendAckOk(void);
-static void MODS_SendAckErr(uint8_t _ucErrCode);
+//static void MODS_SendAckOk(void);
+//static void MODS_SendAckErr(uint8_t _ucErrCode);
 
 static void MODS_AnalyzeApp(void);
 
-static void MODS_RxTimeOut(void);
+//static void MODS_RxTimeOut(void);
 
-static void MODS_01H(void);
-static void MODS_02H(void);
-static void MODS_03H(void);
-static void MODS_04H(void);
-static void MODS_05H(void);
-static void MODS_06H(void);
-static void MODS_10H(void);
+//static void MODS_01H(void);
+//static void MODS_02H(void);
+//static void MODS_03H(void);
+//static void MODS_04H(void);
+//static void MODS_05H(void);
+//static void MODS_06H(void);
+//static void MODS_10H(void);
 
-static uint8_t MODS_ReadRegValue(uint16_t reg_addr, uint8_t *reg_value);
-static uint8_t MODS_WriteRegValue(uint16_t reg_addr, uint16_t reg_value);
+//static uint8_t MODS_ReadRegValue(uint16_t reg_addr, uint8_t *reg_value);
+//static uint8_t MODS_WriteRegValue(uint16_t reg_addr, uint16_t reg_value);
 
 void MODS_ReciveNew(uint8_t _byte);
 
@@ -76,7 +64,7 @@ const MODBUSBPS_T ModbusBaudRate[] =
 
 static void MODS_Read_Slave_Address_Info(void); //MODS -> Modbus - slave machine ,MODH--> host machine
 
-static uint8_t g_mods_timeout = 0;
+//static uint8_t g_mods_timeout = 0;
 MODS_T g_tModS = {0};
 VAR_T g_tVar;
 
@@ -173,10 +161,10 @@ void MODS_ReciveNew(uint8_t _byte)
 *	返 回 值: 无
 *********************************************************************************************************
 */
-static void MODS_RxTimeOut(void)
-{
-	g_mods_timeout = 1;
-}
+//static void MODS_RxTimeOut(void)
+//{
+//	g_mods_timeout = 1;
+//}
 
 /*
 *********************************************************************************************************
@@ -199,7 +187,7 @@ static void MODS_SendWithCRC(uint8_t *_pBuf, uint8_t _ucLen)
 
 	RS485_SendBuf(buf, _ucLen);
 }
-
+#if 0
 /*
 *********************************************************************************************************
 *	函 数 名: MODS_SendAckErr
@@ -238,7 +226,7 @@ static void MODS_SendAckOk(void)
 	}
 	MODS_SendWithCRC(txbuf, 6);
 }
-
+#endif 
 /*
 *********************************************************************************************************
 *	函 数 名: MODS_AnalyzeApp
@@ -311,7 +299,7 @@ static void MODS_AnalyzeApp(void)
 */
 static void MODS_Read_Slave_Address_Info(void)
 {
-    uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data,fun_byte;
+    uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data;
 
 
 	  
@@ -334,23 +322,21 @@ static void MODS_Read_Slave_Address_Info(void)
 				switch(byte_data){
 
                    case 0:
-                       g_tMain.gPower_On = power_off;
-				      
+                       
+				      g_tMain.rs485_Command_label = power_off;
 				       
 				      
 				   break;
 
 				   case 1:
-				      g_tMain.gPower_On = power_on;
+				      g_tMain.rs485_Command_label = power_on;
 					 
 
 				   break;
 
 				}	
 					
-	
-				
-			break;
+	        break;
 
 			case mod_ptc:
 
@@ -455,6 +441,7 @@ void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t d
 
 
 }
+#if 0
 /*
 *********************************************************************************************************
 *	函 数 名: MODS_01H
@@ -1231,5 +1218,5 @@ err_ret:
 		MODS_SendAckErr(g_tModS.RspCode);			/* 告诉主机命令错误 */
 	}
 }
+#endif 
 
-/***************************** 安富莱电子 www.armfly.com (END OF FILE) *********************************/

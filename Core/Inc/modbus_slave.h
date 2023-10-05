@@ -90,13 +90,7 @@ typedef enum {
    
 }_mod_fun;
 
-typedef enum{
-  
-  power_off,
-  power_on,
 
-
-}power_state;
 
 
 void MODS_Poll(void);

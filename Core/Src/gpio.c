@@ -45,12 +45,12 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, RS485_TEXEN_Pin|TEMPERATURE_SIGNAL_Pin|MOTOR_CONTROL_1_Pin|PLASMA_SIGNAL_Pin
-                          |RELAY_SIGNAL_Pin, GPIO_PIN_RESET);
+                          |RELAY_SIGNAL_Pin| MOTOR_CONTROL_RUN_Pin , GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PAPin PAPin PAPin PAPin
                            PAPin */
   GPIO_InitStruct.Pin = RS485_TEXEN_Pin|TEMPERATURE_SIGNAL_Pin|MOTOR_CONTROL_1_Pin|PLASMA_SIGNAL_Pin
-                          |RELAY_SIGNAL_Pin;
+                          |RELAY_SIGNAL_Pin| MOTOR_CONTROL_RUN_Pin ;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

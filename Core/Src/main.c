@@ -69,7 +69,6 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	MSG_T ucMsg;
     static uint8_t cupid_times;
   /* USER CODE END 1 */
 
@@ -98,10 +97,11 @@ int main(void)
   MX_TIM17_Init();
   MX_TIM3_Init();
   MX_TIM14_Init();
-  MX_TIM16_Init();
+ // MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
    delay_init(24);
    bsp_InitUart();
+   bsp_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -119,6 +119,7 @@ int main(void)
 
 	bsp_Idle(); /* Modbus解析在此函数里面 */
 	Mainboard_Run_Process_Handler();
+	
 		
 		
   }

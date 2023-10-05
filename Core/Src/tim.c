@@ -30,6 +30,7 @@ TIM_HandleTypeDef htim16;
 TIM_HandleTypeDef htim17;
 
 /* TIM3 init function */
+//Ultrasonic PWM is 25KHz 
 void MX_TIM3_Init(void)
 {
 
@@ -45,9 +46,9 @@ void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 0;
+  htim3.Init.Prescaler = 23;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 65535;
+  htim3.Init.Period =  39;//65535; //f= 1/(39+1)= 0.025MHz = 25KHz, T= 1/25=0.04ms.
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -70,7 +71,7 @@ void MX_TIM3_Init(void)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = 0;
+  sConfigOC.Pulse = 20; //PWM Duty is 50%
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
@@ -124,6 +125,7 @@ void MX_TIM14_Init(void)
   HAL_TIM_MspPostInit(&htim14);
 
 }
+#if 0
 /* TIM16 init function */
 void MX_TIM16_Init(void)
 {
@@ -182,7 +184,9 @@ void MX_TIM16_Init(void)
   HAL_TIM_MspPostInit(&htim16);
 
 }
+#endif 
 /* TIM17 init function */
+//timer is TIM17
 void MX_TIM17_Init(void)
 {
 
@@ -194,9 +198,9 @@ void MX_TIM17_Init(void)
 
   /* USER CODE END TIM17_Init 1 */
   htim17.Instance = TIM17;
-  htim17.Init.Prescaler = 0;
+  htim17.Init.Prescaler = 23; //F = 24MHz/(23+1) =1MHz,
   htim17.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim17.Init.Period = 65535;
+  htim17.Init.Period = 9999 ;//65535; 10ms, Ft = 1/(9999+1)= 0.0001MHz= 0.1KHz, T= 1/0.1=10ms
   htim17.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim17.Init.RepetitionCounter = 0;
   htim17.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -235,6 +239,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 
   /* USER CODE END TIM14_MspInit 1 */
   }
+  #if 0
   else if(tim_baseHandle->Instance==TIM16)
   {
   /* USER CODE BEGIN TIM16_MspInit 0 */
@@ -246,6 +251,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
 
   /* USER CODE END TIM16_MspInit 1 */
   }
+  #endif 
   else if(tim_baseHandle->Instance==TIM17)
   {
   /* USER CODE BEGIN TIM17_MspInit 0 */
@@ -253,6 +259,11 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
   /* USER CODE END TIM17_MspInit 0 */
     /* TIM17 clock enable */
     __HAL_RCC_TIM17_CLK_ENABLE();
+
+	/* TIM17 interrupt Init */
+    HAL_NVIC_SetPriority(TIM17_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(TIM17_IRQn);
+
   /* USER CODE BEGIN TIM17_MspInit 1 */
 
   /* USER CODE END TIM17_MspInit 1 */
@@ -303,6 +314,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 
   /* USER CODE END TIM14_MspPostInit 1 */
   }
+  #if 0
   else if(timHandle->Instance==TIM16)
   {
   /* USER CODE BEGIN TIM16_MspPostInit 0 */
@@ -324,6 +336,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 
   /* USER CODE END TIM16_MspPostInit 1 */
   }
+  #endif 
 
 }
 
@@ -352,6 +365,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 
   /* USER CODE END TIM14_MspDeInit 1 */
   }
+  #if 0
   else if(tim_baseHandle->Instance==TIM16)
   {
   /* USER CODE BEGIN TIM16_MspDeInit 0 */
@@ -363,6 +377,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 
   /* USER CODE END TIM16_MspDeInit 1 */
   }
+  #endif 
   else if(tim_baseHandle->Instance==TIM17)
   {
   /* USER CODE BEGIN TIM17_MspDeInit 0 */
@@ -370,6 +385,9 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
   /* USER CODE END TIM17_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_TIM17_CLK_DISABLE();
+  
+    /* TIM17 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(TIM17_IRQn);
   /* USER CODE BEGIN TIM17_MspDeInit 1 */
 
   /* USER CODE END TIM17_MspDeInit 1 */

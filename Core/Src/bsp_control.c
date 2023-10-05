@@ -1,50 +1,273 @@
 #include "bsp_control.h"
 #include "bsp.h"
 
+uint8_t interval_time_stop_run ;
+uint8_t gFan_continueRun ;
+
+
+void (* fan_continue_run)(void);
+
+static void Current_Works_State(void);
+static void Works_Rest_Cycle_TenMinutes(void);
+static void Fan_Run_Fun(void);
+static void Fan_Stop(void);
+static void Fan_RunTenMinutes(void);
+
+
 /*****************************************************************
 	*
-	*Function Name:void Mainboard_Run_Process_Handler(void)
-	*Function:run main board of function that ptc ,plasma,ultrasonic.
+	*Function Name:static void Ultrasonic_PWM_OnOff(uint8_t onoff)
+	*Function:
 	*
 	*
 	*
 *****************************************************************/
+void bsp_Init(void)
+{
+    
+	Fan_Continue_RunTenMinutes(Fan_RunTenMinutes);
+
+
+}
+
+/*****************************************************************
+	*
+	*Function Name:void Mainboard_Run_Process_Handler(void)
+	*Function:run main board of function that ptc ,plasma,ultrasonic.
+	*         continue 2 hours and have a rest ten minutes.
+	*Input Ref:NO
+	*Return Ref:NO
+	*
+*****************************************************************/
 void Mainboard_Run_Process_Handler(void)
 {
-   uint8_t cycle_run;
 
-   if(g_tMain.gPower_On == power_on){
+  static uint8_t power_off_flag;
+   switch(g_tMain.rs485_Command_label){
 
-       switch(cycle_run){
+
+    case power_on:
+		power_off_flag=0;
+        g_tMain.gPower_On = power_on;
+		interval_time_stop_run =0;
+        g_tMain.gTimer_continuce_works_time=0;
+	    g_tMain.gPtc = 1;
+		g_tMain.gPlasma=1;
+		g_tMain.gUltrasonic =1;
+		Fan_Run_Fun();
+	    g_tMain.rs485_Command_label= run_update_data;
+    break;
+
+
+	case run_update_data:
+		switch(interval_time_stop_run){
+
+         case 0 :
+			Current_Works_State();
+	    
+		break;
+
+		case 1:
+			    
+			Works_Rest_Cycle_TenMinutes();
+		break;
+
+   		}
+
+
+	break;
+
+
+	case power_off:
+        if(power_off_flag==0){
+			power_off_flag++;
+		g_tMain.gPower_On = power_off;
+	    interval_time_stop_run =0;
+        g_tMain.gTimer_continuce_works_time=0;
+		gFan_continueRun=1;
+	    g_tMain.gPtc = 1;
+		g_tMain.gPlasma=1;
+		g_tMain.gUltrasonic =1;
+		PTC_IO_SetLow();
+		PLASMA_IO_SetLow();
+		HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);//ultrasnoic off
+
+        }
+        fan_continue_run();
+
+
+	break;
+
+  }
+}
+/*****************************************************************
+	  *
+	  *Function Name:void Mainboard_Run_Process_Handler(void)
+	  *Function
+	  *Input Ref:NO 		
+	  *Return Ref:NO
+	  *
+*****************************************************************/
+static void Current_Works_State(void)
+{
+     static uint8_t cycle_run;
+
+     switch(cycle_run){
 
 	     case 0:
-		 	
+            if(g_tMain.gTimer_run_main_times > 1){
+			  g_tMain.gTimer_run_main_times=0;
+	          Update_DHT11_Value_Handler();
 
-	     break;
+            }
+	        cycle_run =1;
+		 	
+		 break;
 
 		 case 1:
+		 	
+		 	 if(g_tMain.gPtc == 1){
+			    PTC_IO_SetHigh(); 
+
+			 }
+			 else{
+				PTC_IO_SetLow();
+
+			 }
+		  cycle_run =2;
 
 		 break;
 
 
 		 case 2:
+		 	if(g_tMain.gPlasma ==1){
+
+              PLASMA_IO_SetHigh();
+			}
+			else{
+
+			  PLASMA_IO_SetLow();
+			}
 		 	
-
+          cycle_run =3;
 		 break;
-	   
-		   
 
 
+		 case 3:
 
-	   }
-   }
-   else{
+		  if(g_tMain.gUltrasonic ==1){
 
+			HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);//ultrasnoic ON 
+		  }
+		  else{
 
+           HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);//ultrasnoic off
+		  }
 
+         cycle_run =4;
+		 break;
+
+		 case 4:
+
+			if(g_tMain.gTimer_continuce_works_time > 7200){
+		     g_tMain.gTimer_continuce_works_time =0;
+	         interval_time_stop_run =1;
+		     gFan_continueRun =1;
+			 g_tMain.gTimer_fan_counter=0;
+		    }
+
+			cycle_run =0;
+		 break;
 
    }
 
 }
+/*****************************************************************
+	  *
+	  *Function Name:static void Works_Rest_Cycle_TenMinutes()
+	  *Function
+	  *Input Ref:NO 		
+	  *Return Ref:NO
+	  *
+*****************************************************************/
+static void Works_Rest_Cycle_TenMinutes(void)
+{
+	if(g_tMain.gTimer_continuce_works_time < 10){
+		PLASMA_IO_SetLow(); //
+		HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);//ultrasnoic Off 
+		PTC_IO_SetLow(); 
+		
+    }
+
+	fan_continue_run();
+
+	
+
+	if(g_tMain.gTimer_continuce_works_time > 600){
+		g_tMain.gTimer_continuce_works_time=0;
+		interval_time_stop_run =0;
+
+    }
+
+}
+
+
+
+static void Fan_Run_Fun(void)
+{
+    FAN_IO_RUN_SetHigh();
+	FAN_IO_SetLow();
+
+}
+
+static void Fan_Stop(void)
+{
+
+	FAN_IO_RUN_SetLow();
+	FAN_IO_SetLow();
+
+
+}
+
+/*****************************************************************
+	  *
+	  *Function Name:static void Fan_RunTenMinutes(void)
+	  *Function: function of pointer by special run function
+	  *Input Ref:NO 		
+	  *Return Ref:NO
+	  *
+*****************************************************************/
+static void Fan_RunTenMinutes(void)
+{
+
+	if(gFan_continueRun ==1){
+
+		if(g_tMain.gTimer_fan_counter < 60){
+
+		Fan_Run_Fun();
+		}       
+
+		if(g_tMain.gTimer_fan_counter > 59){
+
+		g_tMain.gTimer_fan_counter=0;
+
+		gFan_continueRun++;
+		Fan_Stop();
+		}
+
+	}
+	else Fan_Stop();
+
+
+}
+
+//call for  function of pointer
+void Fan_Continue_RunTenMinutes(void (*fan_run)(void))
+{
+
+    fan_continue_run = fan_run;
+
+}
+
 
 

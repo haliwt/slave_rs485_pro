@@ -60,6 +60,9 @@
 #include "bsp_user_lib.h"
 #include "bsp_control.h"
 #include "delay.h"
+#include "interrupt_manager.h"
+#include "iwdg.h"
+#include "bsp_sensor.h"
 
 typedef struct _cpuId_{
 
@@ -75,7 +78,7 @@ extern CPUID cpuId;
 
 
 /* 提供给其他C文件调用的函数 */
-void bsp_Init(void);
+//void bsp_Init(void);
 void bsp_Idle(void);
 
 void bsp_GetCpuID(void);

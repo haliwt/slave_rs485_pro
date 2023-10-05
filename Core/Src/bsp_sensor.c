@@ -12,6 +12,8 @@
 static void DHT11_Mode_IPU(void);
 static void DHT11_Mode_Out_PP(void);
 static uint8_t DHT11_ReadByte(void);
+static void  Dht11_Read_TempHumidity_Value(DHT11_Data_TypeDef * pdth11);
+
 DHT11_Data_TypeDef DHT11;
 
 
@@ -179,23 +181,23 @@ uint8_t DHT11_Read_TempAndHumidity(DHT11_Data_TypeDef *DHT11_Data)
 }
 
 
-void  Dht11_Read_TempHumidity_Handler(DHT11_Data_TypeDef * pdth11)
+static void  Dht11_Read_TempHumidity_Value(DHT11_Data_TypeDef * pdth11)
 {
 	if(DHT11_Read_TempAndHumidity(pdth11) == 0){
 		   
-		   = (pdth11->humi_high8bit);
+		 g_tMain.gHumidity   = (pdth11->humi_high8bit);
 		   
-		    = (pdth11->temp_high8bit);
+		 g_tMain.gTemperature = (pdth11->temp_high8bit);
 	   
 	 }
 
 }
 
-void Update_DHT11_Value(void)
+void Update_DHT11_Value_Handler(void)
 {
     
   
-   Dht11_Read_TempHumidity_Handler(&DHT11);
+   Dht11_Read_TempHumidity_Value(&DHT11);
 	
 
 //	sendData_Real_TimeHum(run_t.gDht11_humidity ,run_t.gDht11_temperature);

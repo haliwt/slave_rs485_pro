@@ -64,6 +64,10 @@ void Error_Handler(void);
 #define TEMPERATURE_SIGNAL_Pin 			GPIO_PIN_3
 #define TEMPERATURE_SIGNAL_GPIO_Port 	GPIOA
 
+
+#define MOTOR_CONTROL_RUN_Pin			      GPIO_PIN_6
+#define MOTOR_CONTROL_RUN_GPIO_Port     GPIOA
+
 #define MOTOR_CONTROL_1_Pin 			GPIO_PIN_7
 #define MOTOR_CONTROL_1_GPIO_Port 		GPIOA
 
