@@ -72,30 +72,7 @@ typedef struct
 
 }VAR_T;
 
-typedef struct {
 
-    uint8_t gPower_On;
-	uint8_t gFan_continueRun;
-	uint8_t  gFan_counter;
-	uint8_t gTimer_fan_adc_times;
-	uint8_t gFan_level;
-
-	//adc 
-	uint8_t ADC_channel_No;
-
-	uint8_t  gPlasma;
-    uint8_t  gPtc;
-    uint8_t  gUltrasonic;
-
-	uint8_t  gTemperature;
-    uint8_t  gHumidity;
-
-	//fault 
-	uint8_t fan_warning ;
-	uint8_t ptc_warning;
-
-
-}MAINBOARD_T;
 
 
 typedef enum {
@@ -125,7 +102,7 @@ typedef enum{
 void MODS_Poll(void);
 extern MODS_T g_tModS;
 extern VAR_T g_tVar;
-extern MAINBOARD_T g_tMain;
+
 
 void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t data);
 

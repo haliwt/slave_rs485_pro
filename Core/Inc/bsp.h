@@ -58,11 +58,12 @@
 #include "usart.h"
 #include "modbus_slave.h"
 #include "bsp_user_lib.h"
+#include "control.h"
 
 typedef struct _cpuId_{
 
-   uin8_t cpu_id;
-   uin8_t slave_address;
+   uint8_t cpu_id;
+   uint8_t slave_address;
   
 
 }CPUID;
@@ -76,7 +77,7 @@ extern CPUID cpuId;
 void bsp_Init(void);
 void bsp_Idle(void);
 
-void bsp_GetCpuID(uint32_t *_id);
+void bsp_GetCpuID(void);
 //void Error_Handler(char *file, uint32_t line);
 extern void SystemClock_Config(void);
 #endif

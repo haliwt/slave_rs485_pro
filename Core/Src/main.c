@@ -117,6 +117,7 @@ int main(void)
 	}
 
 	bsp_Idle(); /* Modbus解析在此函数里面 */
+	Mainboard_Run_Process_Handler();
 		
 		if (bsp_GetMsg(&ucMsg))
 		{

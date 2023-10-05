@@ -74,7 +74,7 @@ const MODBUSBPS_T ModbusBaudRate[] =
 	{230400, 1750},
 };
 
-static MODS_Read_Slave_Address_Info(void); //MODS -> Modbus - slave machine ,MODH--> host machine
+static void MODS_Read_Slave_Address_Info(void); //MODS -> Modbus - slave machine ,MODH--> host machine
 
 static uint8_t g_mods_timeout = 0;
 MODS_T g_tModS = {0};
@@ -309,7 +309,7 @@ static void MODS_AnalyzeApp(void)
 *	�� �� ֵ: ��
 *********************************************************************************************************
 */
-static MODS_Read_Slave_Address_Info(void)
+static void MODS_Read_Slave_Address_Info(void)
 {
     uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data,fun_byte;
 
@@ -348,7 +348,7 @@ static MODS_Read_Slave_Address_Info(void)
 
 				}	
 					
-				g_tModS.fAck01H = 1;
+	
 				
 			break;
 
@@ -370,7 +370,7 @@ static MODS_Read_Slave_Address_Info(void)
 				   break;
 
 				}	
-                g_tModS.fAck02H = 1;
+               
 			   }
 			break;
 
@@ -393,7 +393,7 @@ static MODS_Read_Slave_Address_Info(void)
 				   break;
 
 				}	
-                g_tModS.fAck03H = 1;
+              
 				}
 
 			break;
@@ -417,7 +417,7 @@ static MODS_Read_Slave_Address_Info(void)
 				   break;
 
 				}	
-                g_tModS.fAck04H = 1;
+               
 
 			   }
 
@@ -442,20 +442,19 @@ void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t d
 	g_tModS.TxCount = 0;
 	g_tModS.TxBuf[g_tModS.TxCount++] = 0x0;		/* 广播模式 */
 	g_tModS.TxBuf[g_tModS.TxCount++] = MASTER_ADDRESS;  /* 应答地址 */
-	g_tModS.TxBuf[g_tModS.TxCount++] = fun_code;		/* 功能码 等离子开或者关闭 */	
+	g_tModS.TxBuf[g_tModS.TxCount++] = fun_code;		/* 功能砄1�7 等离子开或��关闄1�7 */	
 	g_tModS.TxBuf[g_tModS.TxCount++] = len;	/* 数据长度*/
 	g_tModS.TxBuf[g_tModS.TxCount++] = data;		/* 数据 */
 	
-	//MODS_SendAckWithCRC();		/* 发送数据，自动加CRC */
+	//MODS_SendAckWithCRC();		/* 发��数据，自动加CRC */
 	MODS_SendWithCRC(g_tModS.TxBuf, g_tModS.TxCount);
 	
-	//g_tModH.RegNum = _num;		/* 寄存器个数 */
-	//g_tModH.Reg02H = _reg;		/* 保存02H指令中的寄存器地址，方便对应答数据进行分类 */	
+	//g_tModH.RegNum = _num;		/* 寄存器个敄1�7 */
+	//g_tModH.Reg02H = _reg;		/* 保存02H指令中的寄存器地坢�，方便对应答数据进行分类 */	
 
 
 
 }
-
 /*
 *********************************************************************************************************
 *	�� �� ��: MODS_01H

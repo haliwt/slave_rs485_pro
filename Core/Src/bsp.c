@@ -31,31 +31,38 @@ CPUID cpuId;
 void bsp_GetCpuID(void)
 {
   static uint8_t id;
+  uint32_t CPU_Sn0, CPU_Sn1, CPU_Sn2;
+  uint8_t i;
  /* 检测CPU ID */
-	{
-		uint32_t CPU_Sn0, CPU_Sn1, CPU_Sn2;
-		
-		CPU_Sn0 = *(__IO uint32_t*)(UID_BASE); //(0x1FFF7590);
-		CPU_Sn1 = *(__IO uint32_t*)(UID_BASE+ 4U);
-		CPU_Sn2 = *(__IO uint32_t*)(UID_BASE + 8U);
+	
+	  
+	   CPU_Sn0 =  HAL_GetUIDw0();
+	   CPU_Sn1 =  HAL_GetUIDw1();
+	   CPU_Sn2 =  HAL_GetUIDw2();
 
 		//printf("CPU : STM32H743XIH6, BGA240, 主频: %dMHz\r\n", SystemCoreClock / 1000000);
 		//printf("UID = %08X %08X %08X\r\n", CPU_Sn2, CPU_Sn1, CPU_Sn0);
-	}
+	
 //  cpuId.cpu_id_one =(uint8_t)CPU_Sn0;
 //  cpuId.cpu_id_two =(uint8_t)CPU_Sn1;
 //	cpuId.cpu_id_three =(uint8_t)CPU_Sn2;
-    id = (uint8_t)CPU_Sn0 + (uint8_t)CPU_Sn1 + (uint8_t)CPU_Sn2;
+   
 
-   if(id ==0){
+   do{
+   	 i++;
+	 if(i==0)
+	   id = (uint8_t)CPU_Sn0 + (uint8_t)CPU_Sn1 + (uint8_t)CPU_Sn2;
+	 else if(i==1)
+       id = (uint8_t)CPU_Sn0 + (uint8_t)CPU_Sn1 +(uint8_t)(CPU_Sn2 >> 8);
+	 else if(i==2)
+       id = (uint8_t)CPU_Sn0 + (uint8_t)CPU_Sn1 +(uint8_t)(CPU_Sn2 >> 16);
+	 else if(i==3) id=10;
 
-	   id = (uint8_t)CPU_Sn0 + (uint8_t)CPU_Sn1 +(uint8_t)(CPU_Sn2 >> 8);
 
-   }
+   }while(id ==0);
 
-   if(id ==0) id = 10;
 
-	cpuId.slave_address = id;
+   cpuId.slave_address = id;
 }
 
 
