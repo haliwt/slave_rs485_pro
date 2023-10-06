@@ -7,11 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2023 STMicroelectronics.
-  * All rights reserved.
+  * Tout =(4*2^prer *rlr)/32 (ms) //IWDG ->LSI ->32KHz
+  *      =((4*2^0)*4095)/32
+  *		 = 511.8ms.
   *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
+  * Tout = (64 * 4095) /32 = 8s.
+  *
   * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
@@ -38,7 +39,7 @@ void MX_IWDG_Init(void)
 
   /* USER CODE END IWDG_Init 1 */
   hiwdg.Instance = IWDG;
-  hiwdg.Init.Prescaler = IWDG_PRESCALER_4;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_64;
   hiwdg.Init.Window = 4095;
   hiwdg.Init.Reload = 4095;
   if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
@@ -60,7 +61,7 @@ void MX_IWDG_Init(void)
 void iwdg_feed(void)
 {
 
-	if(g_tMain.gTimer_iwdg_feed_times >1){
+	if(g_tMain.gTimer_iwdg_feed_times >5){
 	      g_tMain.gTimer_iwdg_feed_times=0;
 	      HAL_IWDG_Refresh(&hiwdg);
 	}
