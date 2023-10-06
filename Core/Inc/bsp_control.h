@@ -34,6 +34,8 @@ typedef struct {
 
    //adc 
 	uint8_t ADC_channel_No;
+	uint8_t ptc_temp_voltage;
+	uint8_t fan_detect_voltage;
 
 	uint8_t  gPlasma;
     uint8_t  gPtc;
@@ -46,12 +48,17 @@ typedef struct {
 	uint8_t fan_warning ;
 	uint8_t ptc_warning;
 
+	
+
 	//void (*fan_continue_run)(void); 	/* fan ren ten minutes and stop */
 	
     uint8_t gTimer_iwdg_feed_times;
-	uint8_t gTimer_run_main_times;
+	uint8_t gTimer_sensor_detect_times;
 	uint8_t gTimer_fan_counter;
+	uint8_t gTimer_ptc_adc_times ;
+	uint8_t gTimer_fan_adc_times ;
 	uint16_t gTimer_continuce_works_time ;
+	
 
 
 }MAINBOARD_T;

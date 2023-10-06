@@ -41,6 +41,11 @@ extern ADC_HandleTypeDef hadc1;
 void MX_ADC1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+void Judge_PTC_Temperature_Value(void);
+void Get_PTC_Temperature_Voltage(uint32_t channel,uint8_t times);
+
+
+void Get_Fan_Adc_Fun(uint32_t channel,uint8_t times);
 
 /* USER CODE END Prototypes */
 

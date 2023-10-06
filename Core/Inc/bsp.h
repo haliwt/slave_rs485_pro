@@ -63,6 +63,8 @@
 #include "interrupt_manager.h"
 #include "iwdg.h"
 #include "bsp_sensor.h"
+#include "bsp_beep.h"
+#include "adc.h"
 
 typedef struct _cpuId_{
 

@@ -55,6 +55,7 @@ void Mainboard_Run_Process_Handler(void)
 		g_tMain.gPlasma=1;
 		g_tMain.gUltrasonic =1;
 		Fan_Run_Fun();
+		g_tMain.gTimer_sensor_detect_times = 66;
 	    g_tMain.rs485_Command_label= run_update_data;
     break;
 
@@ -115,8 +116,8 @@ static void Current_Works_State(void)
      switch(cycle_run){
 
 	     case 0:
-            if(g_tMain.gTimer_run_main_times > 1){
-			  g_tMain.gTimer_run_main_times=0;
+            if(g_tMain.gTimer_sensor_detect_times > 63){
+			  g_tMain.gTimer_sensor_detect_times=0;
 	          Update_DHT11_Value_Handler();
 
             }
@@ -168,6 +169,40 @@ static void Current_Works_State(void)
 		 break;
 
 		 case 4:
+
+		   if(g_tMain.gTimer_ptc_adc_times > 45){
+		      g_tMain.gTimer_ptc_adc_times =0;
+
+		     if(g_tMain.ptc_warning ==0){
+
+             Get_PTC_Temperature_Voltage(ADC_CHANNEL_1,5);
+			 Judge_PTC_Temperature_Value();
+
+		     }
+
+		   }
+		  cycle_run =5;
+
+		 break;
+
+		 case 5:
+
+		   if(g_tMain.gTimer_fan_adc_times > 36){
+
+		      g_tMain.gTimer_fan_adc_times =0;
+			  if(g_tMain.fan_warning ==0){
+				 Get_Fan_Adc_Fun(ADC_CHANNEL_0,5);
+				  
+	           }
+
+		   }
+		 
+
+		 cycle_run =6;
+
+		 break;
+
+		 case 6:
 
 			if(g_tMain.gTimer_continuce_works_time > 7200){
 		     g_tMain.gTimer_continuce_works_time =0;

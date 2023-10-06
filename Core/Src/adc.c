@@ -21,7 +21,7 @@
 #include "adc.h"
 
 /* USER CODE BEGIN 0 */
-
+#include "bsp.h"
 /* USER CODE END 0 */
 
 ADC_HandleTypeDef hadc1;
@@ -133,5 +133,171 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 }
 
 /* USER CODE BEGIN 1 */
+/*****************************************************************
+*
+	*Function Name: static uint16_t Get_Adc(uint32_t ch)  
+	*Function ADC input channel be selected "which one channe"
+	*Input Ref: which one ? AC_Channel_?
+	*Return Ref: No
+	*
+	*
+*****************************************************************/
+static uint16_t Get_Adc_Channel(uint32_t ch)   
+{
+    ADC_ChannelConfTypeDef ADC1_ChanConf;
+
+	ADC1_ChanConf.Channel=ch;                                   //Í¨µÀ
+    ADC1_ChanConf.Rank= ADC_REGULAR_RANK_1;                                    //第一个序刄1�7
+    ADC1_ChanConf.SamplingTime=ADC_SAMPLETIME_1CYCLE_5;//ADC_SAMPLETIME_239CYCLES_5;      //²ÉÑùÊ±¼ä               
+
+
+	HAL_ADC_ConfigChannel(&hadc1,&ADC1_ChanConf);        //Í¨µÀÅäÖÃ
+	
+    HAL_ADC_Start(&hadc1);                               //start ADC transmit
+	
+    HAL_ADC_PollForConversion(&hadc1,10);                //轮询转换
+ 
+	return (uint16_t)HAL_ADC_GetValue(&hadc1);	        	//·µ»Ø×î½üÒ»´ÎADC1¹æÔò×éµÄ×ª»»½á¹û
+}
+/*****************************************************************
+*
+	*Function Name: static uint16_t Get_Adc(uint32_t ch)  
+	*Function ADC input channel be selected "which one channe"
+	*Input Ref: which one ? AC_Channel_?
+	*Return Ref: No
+	*
+	*
+*****************************************************************/
+//static uint16_t Get_Adc_Average(uint8_t times)
+//{
+//	
+//	HAL_ADC_Start(&hadc1);								
+//    
+//    temp_value= ADC1->DR;
+//    return temp_value;
+//}
+
+static uint16_t Get_Adc_Average(uint32_t ch,uint8_t times)
+{
+	uint32_t temp_val=0;
+	uint8_t t;
+	for(t=0;t<times;t++)
+	{
+		temp_val+=Get_Adc_Channel(ch);
+		delay_ms(5);
+	}
+	return temp_val/times;
+} 
+
+
+
+void Get_PTC_Temperature_Voltage(uint32_t channel,uint8_t times)
+{
+    uint16_t adx;
+	static uint8_t open_ptc_detected_flag ;
+	adcx = Get_Adc_Average(channel,times);
+
+    g_tModS.ptc_temp_voltage  =(uint16_t)((adcx * 3300)/4096); //amplification 100 ,3.11V -> 311
+
+	if(open_ptc_detected_flag == 0){ //power on the voltage is small 
+         open_ptc_detected_flag++ ;
+         g_tModS.ptc_temp_voltage = 500;
+    }
+	#ifdef DEBUG
+      printf("ptc= %d",  g_tModS.ptc_temp_voltage);
+	#endif 
+}
+
+
+/*****************************************************************
+	*
+	*Function Name: void Judge_PTC_Temperature_Value(void)
+	*Function: PTC adc read voltage
+	*Input Ref: NO
+	*Return Ref: No
+	*
+	*
+*****************************************************************/
+void Judge_PTC_Temperature_Value(void)
+{
+  //if(run_t.ptc_temp_voltage < 54 || run_t.ptc_temp_voltage ==54){ //75 degree
+   
+  //if(run_t.ptc_temp_voltage < 60 || run_t.ptc_temp_voltage ==60){ //70 degree
+  if(g_tModS.ptc_temp_voltage < 373 || g_tModS.ptc_temp_voltage ==373){ //90 degree
+	    g_tModS.gPtc =0 ;
+	    PTC_IO_SetLow()(); //turn off
+		g_tModS.ptc_warning =1;
+       // SendWifiCmd_To_Order(PTC_WARNING_ITEM);
+
+        Buzzer_KeySound();
+
+	   HAL_Delay(200);
+       //Buzzer_KeySound();
+       Buzzer_KeySound_Off();
+       HAL_Delay(100);
+	   Buzzer_KeySound();
+       HAL_Delay(100);
+	   Buzzer_KeySound_Off();//Buzzer_KeySound();
+       HAL_Delay(100);
+	   Buzzer_KeySound();
+       HAL_Delay(100);
+	   Buzzer_KeySound_Off();
+   	      
+   }
+   
+}
+
+/*****************************************************************
+	*
+	*Function Name: void Get_Fan_Adc_Fun(uint8_t channel,uint8_t times)
+	*Function ADC input channel be selected "which one channe"
+	*Input Ref: which one ? AC_Channel_?, hexadecimal of average
+	*Return Ref: No
+	*
+	*
+*****************************************************************/
+void Get_Fan_Adc_Fun(uint32_t channel,uint8_t times)
+{
+
+    static uint8_t detect_error_times;
+	uint16_t adc_fan_hex;
+	
+	
+	adc_fan_hex = Get_Adc_Average(channel,times);
+
+    g_tModS.fan_detect_voltage  =(uint16_t)((adc_fan_hex * 3300)/4096); //amplification 1000 ,3.111V -> 3111
+	HAL_Delay(5);
+
+	if(g_tModS.fan_detect_voltage >300 &&  g_tModS.fan_detect_voltage < 1400){
+           detect_error_times=0;
+		   #ifdef DEBUG
+             printf("adc= %d",run_t.fan_detect_voltage);
+		   #endif 
+           g_tModS.fan_warning = 0;
+    }
+	else{
+
+	          
+			   if(detect_error_times >0){
+			   		detect_error_times=0;
+		           g_tModS.fan_warning = 1;
+				
+			       HAL_Delay(200);
+			       Buzzer_KeySound();
+			       HAL_Delay(100);
+				   Buzzer_KeySound_Off();//Buzzer_KeySound();
+			       HAL_Delay(100);
+				   Buzzer_KeySound();
+			       HAL_Delay(100);
+				   Buzzer_KeySound_Off();//Buzzer_KeySound();
+			       HAL_Delay(100);
+				  
+				  
+
+			   	}
+	           detect_error_times++;
+
+     }
+}
 
 /* USER CODE END 1 */
