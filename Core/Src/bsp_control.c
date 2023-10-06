@@ -190,10 +190,10 @@ static void Current_Works_State(void)
 		   if(g_tMain.gTimer_fan_adc_times > 36){
 
 		      g_tMain.gTimer_fan_adc_times =0;
-			  if(g_tMain.fan_warning ==0){
+			 // if(g_tMain.fan_warning ==0){
 				 Get_Fan_Adc_Fun(ADC_CHANNEL_0,5);
 				  
-	           }
+	         //  }
 
 		   }
 		 

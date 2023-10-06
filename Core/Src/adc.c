@@ -184,7 +184,7 @@ static uint16_t Get_Adc_Average(uint32_t ch,uint8_t times)
 	for(t=0;t<times;t++)
 	{
 		temp_val+=Get_Adc_Channel(ch);
-		delay_ms(5);
+		delay_ms(1);
 	}
 	return temp_val/times;
 } 
