@@ -107,6 +107,7 @@ int main(void)
    bsp_Init();
   /* USER CODE END 2 */
    HAL_TIM_Base_Start_IT(&htim17);
+  UART_Start_Receive_IT(&huart1, g_tModS.rs485_RxInputBuf,0x07);
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)

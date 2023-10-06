@@ -476,34 +476,45 @@ static void UartIRQ(UART_T *_pUart)
 	uint32_t cr1its     = READ_REG(_pUart->uart->CR1);
 	uint32_t cr3its     = READ_REG(_pUart->uart->CR3);
 	
-	/* 处理接收中断  */
+	/* handler of interrupt of receive data  */
 	if ((isrflags & USART_ISR_RXNE_RXFNE) != RESET)
 	{
 		/* 从串口接收数据寄存器读取数据存放到接收FIFO */
 		uint8_t ch;
 
-		ch = READ_REG(_pUart->uart->RDR);
-		_pUart->pRxBuf[_pUart->usRxWrite] = ch;
-		if (++_pUart->usRxWrite >= _pUart->usRxBufSize)
-		{
-			_pUart->usRxWrite = 0;
+//		ch = READ_REG(_pUart->uart->RDR);
+//		_pUart->pRxBuf[_pUart->usRxWrite] = ch;
+//		if (++_pUart->usRxWrite >= _pUart->usRxBufSize)
+//		{
+//			_pUart->usRxWrite = 0;
+//		}
+//		if (_pUart->usRxCount < _pUart->usRxBufSize)
+//		{
+//			_pUart->usRxCount++;
+//		}
+        g_tModS.rs485_RxInputBuf[0]=USART1->RDR;
+		g_tModS.RxBuf[g_tModS.RxCount] = g_tModS.rs485_RxInputBuf[0];
+		g_tModS.RxCount++;
+
+        if(g_tModS.RxCount == 7){
+		  g_tModS.Rx_rs485_data_flag = 1;
+
+
+
 		}
-		if (_pUart->usRxCount < _pUart->usRxBufSize)
-		{
-			_pUart->usRxCount++;
-		}
+		
 
 		/* 回调函数,通知应用程序收到新数据,一般是发送1个消息或者设置一个标记 */
 		//if (_pUart->usRxWrite == _pUart->usRxRead)
 		//if (_pUart->usRxCount == 1)
-		{
-			if (_pUart->ReciveNew)
-			{
-				_pUart->ReciveNew(ch); /* 比如，交给MODBUS解码程序处理字节流 */
-			}
-		}
+//		{
+//			if (_pUart->ReciveNew)
+//			{
+//				_pUart->ReciveNew(ch); /* 比如，交给MODBUS解码程序处理字节流 */
+//			}
+//		}
 	}
-
+    UART_Start_Receive_IT(&huart1,g_tModS.rs485_RxInputBuf,0x07);
 	/* 处理发送缓冲区空中断 */
 	if ( ((isrflags & USART_ISR_TXE_TXFNF) != RESET) && (cr1its & USART_CR1_TXEIE_TXFNFIE) != RESET)
 	{

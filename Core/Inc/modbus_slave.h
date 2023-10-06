@@ -52,6 +52,8 @@ typedef struct
 	uint8_t RspCode;
 
 	uint8_t TxBuf[S_TX_BUF_SIZE];
+	uint8_t rs485_RxInputBuf[1];
+	uint8_t Rx_rs485_data_flag;
 	uint8_t TxCount;
 }MODS_T;
 
@@ -72,7 +74,14 @@ typedef struct
 
 }VAR_T;
 
+typedef enum{
 
+   rs485_receive_data_fail,
+   rs485_receive_data_success,
+
+
+
+}rs485_receive_state;
 
 
 typedef enum {
