@@ -26,7 +26,7 @@
 
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim14;
-TIM_HandleTypeDef htim16;
+//TIM_HandleTypeDef htim16;
 TIM_HandleTypeDef htim17;
 
 /* TIM3 init function */
@@ -85,6 +85,7 @@ void MX_TIM3_Init(void)
 
 }
 /* TIM14 init function */
+//buzzer of sound of pwm 
 void MX_TIM14_Init(void)
 {
 
@@ -98,9 +99,9 @@ void MX_TIM14_Init(void)
 
   /* USER CODE END TIM14_Init 1 */
   htim14.Instance = TIM14;
-  htim14.Init.Prescaler = 0;
+  htim14.Init.Prescaler = 23;// F =1/(23+1)=1MHZ
   htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim14.Init.Period = 65535;
+  htim14.Init.Period = 99;//65535;Ft= 1/(99+1)=0.01MHz = 10KHz 
   htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim14) != HAL_OK)

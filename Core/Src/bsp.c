@@ -104,12 +104,12 @@ void bsp_RunPer1ms(void)
 void bsp_Idle(void)
 {
 	/* --- 喂狗 */
-
+    //  iwdg_feed();
 	/* --- 让CPU进入休眠，由Systick定时中断唤醒或者其他中断唤醒 */
 
 	/* 例如 emWin 图形库，可以插入图形库需要的轮询函数 */
 	//GUI_Exec();
-	iwdg_feed();
+	
 
 	/* 例如 uIP 协议，可以插入uip轮询函数 */
     MODS_Poll();

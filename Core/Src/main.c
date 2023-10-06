@@ -28,10 +28,13 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "bsp.h"
+#include "interrupt_manager.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+ uint8_t cupid_times;
+
 
 /* USER CODE END PTD */
 
@@ -69,7 +72,7 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-    static uint8_t cupid_times;
+   
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -87,11 +90,11 @@ int main(void)
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
-
+  delay_init(24);
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_IWDG_Init();
+//  MX_IWDG_Init();
   MX_USART1_UART_Init();
   MX_ADC1_Init();
   MX_TIM17_Init();
@@ -99,11 +102,11 @@ int main(void)
   MX_TIM14_Init();
  // MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
-   delay_init(24);
+  
    bsp_InitUart();
    bsp_Init();
   /* USER CODE END 2 */
-
+   HAL_TIM_Base_Start_IT(&htim17);
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -116,7 +119,7 @@ int main(void)
 	  bsp_GetCpuID();
 
 	}
-
+    
 	bsp_Idle(); /* Modbus解析在此函数里面 */
 	Mainboard_Run_Process_Handler();
 	
