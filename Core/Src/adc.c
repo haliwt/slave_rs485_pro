@@ -193,15 +193,15 @@ static uint16_t Get_Adc_Average(uint32_t ch,uint8_t times)
 
 void Get_PTC_Temperature_Voltage(uint32_t channel,uint8_t times)
 {
-    uint16_t adx;
+    uint16_t adcx;
 	static uint8_t open_ptc_detected_flag ;
 	adcx = Get_Adc_Average(channel,times);
 
-    g_tModS.ptc_temp_voltage  =(uint16_t)((adcx * 3300)/4096); //amplification 100 ,3.11V -> 311
+    g_tMain.ptc_temp_voltage  =(uint16_t)((adcx * 3300)/4096); //amplification 100 ,3.11V -> 311
 
 	if(open_ptc_detected_flag == 0){ //power on the voltage is small 
          open_ptc_detected_flag++ ;
-         g_tModS.ptc_temp_voltage = 500;
+         g_tMain.ptc_temp_voltage = 500;
     }
 	#ifdef DEBUG
       printf("ptc= %d",  g_tModS.ptc_temp_voltage);
@@ -223,10 +223,10 @@ void Judge_PTC_Temperature_Value(void)
   //if(run_t.ptc_temp_voltage < 54 || run_t.ptc_temp_voltage ==54){ //75 degree
    
   //if(run_t.ptc_temp_voltage < 60 || run_t.ptc_temp_voltage ==60){ //70 degree
-  if(g_tModS.ptc_temp_voltage < 373 || g_tModS.ptc_temp_voltage ==373){ //90 degree
-	    g_tModS.gPtc =0 ;
-	    PTC_IO_SetLow()(); //turn off
-		g_tModS.ptc_warning =1;
+  if(g_tMain.ptc_temp_voltage < 373 || g_tMain.ptc_temp_voltage ==373){ //90 degree
+	    g_tMain.gPtc =0 ;
+	    PTC_IO_SetLow(); //turn off
+		g_tMain.ptc_warning =1;
        // SendWifiCmd_To_Order(PTC_WARNING_ITEM);
 
         Buzzer_KeySound();
@@ -265,22 +265,22 @@ void Get_Fan_Adc_Fun(uint32_t channel,uint8_t times)
 	
 	adc_fan_hex = Get_Adc_Average(channel,times);
 
-    g_tModS.fan_detect_voltage  =(uint16_t)((adc_fan_hex * 3300)/4096); //amplification 1000 ,3.111V -> 3111
+    g_tMain.fan_detect_voltage  =(uint16_t)((adc_fan_hex * 3300)/4096); //amplification 1000 ,3.111V -> 3111
 	HAL_Delay(5);
 
-	if(g_tModS.fan_detect_voltage >300 &&  g_tModS.fan_detect_voltage < 1400){
+	if(g_tMain.fan_detect_voltage >300 &&  g_tMain.fan_detect_voltage < 1400){
            detect_error_times=0;
 		   #ifdef DEBUG
              printf("adc= %d",run_t.fan_detect_voltage);
 		   #endif 
-           g_tModS.fan_warning = 0;
+           g_tMain.fan_warning = 0;
     }
 	else{
 
 	          
 			   if(detect_error_times >0){
 			   		detect_error_times=0;
-		           g_tModS.fan_warning = 1;
+		           g_tMain.fan_warning = 1;
 				
 			       HAL_Delay(200);
 			       Buzzer_KeySound();

@@ -34,7 +34,7 @@ typedef struct {
 
    //adc 
 	uint8_t ADC_channel_No;
-	uint8_t ptc_temp_voltage;
+	uint16_t ptc_temp_voltage;
 	uint8_t fan_detect_voltage;
 
 	uint8_t  gPlasma;
