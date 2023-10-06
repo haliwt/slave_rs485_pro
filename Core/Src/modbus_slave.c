@@ -343,9 +343,7 @@ static void MODS_Read_Slave_Address_Info(void)
 
 	   	Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
 	   
-	   
-	  
-		switch (byte_fun_code)
+	   switch (byte_fun_code)
 		{
 			case mod_power: //0x0101
 				
