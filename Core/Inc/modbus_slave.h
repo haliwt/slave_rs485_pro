@@ -49,6 +49,9 @@ typedef struct
 	uint8_t RxStatus;
 	uint8_t RxNewFlag;
 
+    uint8_t rs485_send_signal_flag;
+	uint8_t answering_signal_flag;
+
 	uint8_t RspCode;
 
 	uint8_t TxBuf[S_TX_BUF_SIZE];
@@ -56,6 +59,9 @@ typedef struct
 	uint8_t Rx_rs485_data_flag;
 	uint8_t TxCount;
 }MODS_T;
+
+extern MODS_T g_tModS;
+
 
 typedef struct
 {
@@ -76,8 +82,20 @@ typedef struct
 
 typedef enum{
 
+  rs485_send_err_fan_signal=0x01,
+  rs485_send_err_ptc_signal,
+
+}rs485_send_state;
+
+
+typedef enum{
+
    rs485_receive_data_fail,
    rs485_receive_data_success,
+   rs485_answering_signal_success,
+   rs485_answering_signal_data,
+   
+ 
 
 
 
@@ -103,11 +121,13 @@ typedef enum {
 
 
 void MODS_Poll(void);
-extern MODS_T g_tModS;
+
 extern VAR_T g_tVar;
 
 
 void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t data);
+void MODS_SendError_Signal(uint8_t err);
+
 
 #endif
 

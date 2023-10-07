@@ -55,7 +55,10 @@ void Mainboard_Run_Process_Handler(void)
 		g_tMain.gPlasma=1;
 		g_tMain.gUltrasonic =1;
 		Fan_Run_Fun();
+		g_tMain.ptc_warning =0;
+		g_tMain.fan_warning = 0;
 		g_tMain.gTimer_sensor_detect_times = 66;
+		Buzzer_KeySound();
 	    g_tMain.rs485_Command_label= run_update_data;
     break;
 
@@ -173,11 +176,36 @@ static void Current_Works_State(void)
 		   if(g_tMain.gTimer_ptc_adc_times > 45){
 		      g_tMain.gTimer_ptc_adc_times =0;
 
-		     if(g_tMain.ptc_warning ==0){
+		     switch(g_tMain.ptc_warning ){
 
-             Get_PTC_Temperature_Voltage(ADC_CHANNEL_1,5);
-			 Judge_PTC_Temperature_Value();
+			 case 0:
+	
 
+             	Get_PTC_Temperature_Voltage(ADC_CHANNEL_1,5);
+			 	Judge_PTC_Temperature_Value();
+
+		     
+			 break;
+
+			 case 1:
+			    if(g_tModS.rs485_send_signal_flag == rs485_send_err_ptc_signal){
+				  	
+				  	if(g_tModS.answering_signal_flag = rs485_answering_signal_success){
+
+				        g_tMain.ptc_warning ++;
+
+					}
+
+				}
+				else   g_tMain.ptc_warning=0;
+
+			 break;
+
+			 case 2: //buzzer sound 
+                   Buzzer_Ptc_Error_Sound();
+
+			 break;
+			
 		     }
 
 		   }
@@ -190,10 +218,41 @@ static void Current_Works_State(void)
 		   if(g_tMain.gTimer_fan_adc_times > 36){
 
 		      g_tMain.gTimer_fan_adc_times =0;
-			 // if(g_tMain.fan_warning ==0){
-				 Get_Fan_Adc_Fun(ADC_CHANNEL_0,5);
+
+		      switch(g_tMain.fan_warning ){
+
+			  case 0:
+			  
+				Get_Fan_Adc_Fun(ADC_CHANNEL_0,5);
 				  
-	         //  }
+	          
+			  break;
+
+			  case 1:
+			
+                 if(g_tModS.rs485_send_signal_flag == rs485_send_err_fan_signal){
+				  	
+					  if(g_tModS.answering_signal_flag = rs485_answering_signal_success){
+
+					        g_tMain.fan_warning ++;
+					  }
+				 }
+				 else {
+				    g_tMain.fan_warning =0;
+
+
+				  }
+
+			  break;
+
+			  case 2: //buzzer sound
+			  	
+                   Buzzer_Fan_Error_Sound();
+
+			  break;
+
+		     }
+			  
 
 		   }
 		 

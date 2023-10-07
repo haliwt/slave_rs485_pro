@@ -231,17 +231,9 @@ void Judge_PTC_Temperature_Value(void)
 
         Buzzer_KeySound();
 
-	   HAL_Delay(200);
-       //Buzzer_KeySound();
-       Buzzer_KeySound_Off();
-       HAL_Delay(100);
-	   Buzzer_KeySound();
-       HAL_Delay(100);
-	   Buzzer_KeySound_Off();//Buzzer_KeySound();
-       HAL_Delay(100);
-	   Buzzer_KeySound();
-       HAL_Delay(100);
-	   Buzzer_KeySound_Off();
+	    Buzzer_Ptc_Error_Sound();
+	    g_tModS.rs485_send_signal_flag = rs485_send_err_ptc_signal;
+	   MODS_SendError_Signal(0xB0);
    	      
    }
    
@@ -282,15 +274,10 @@ void Get_Fan_Adc_Fun(uint32_t channel,uint8_t times)
 			   		detect_error_times=0;
 		           g_tMain.fan_warning = 1;
 				
-			       HAL_Delay(200);
-			       Buzzer_KeySound();
-			       HAL_Delay(100);
-				   Buzzer_KeySound_Off();//Buzzer_KeySound();
-			       HAL_Delay(100);
-				   Buzzer_KeySound();
-			       HAL_Delay(100);
-				   Buzzer_KeySound_Off();//Buzzer_KeySound();
-			       HAL_Delay(100);
+			       Buzzer_Fan_Error_Sound();
+				   g_tModS.rs485_send_signal_flag = rs485_send_err_fan_signal;
+                  
+				   MODS_SendError_Signal(0xA0);
 				  
 				  
 

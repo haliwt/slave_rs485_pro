@@ -3,6 +3,9 @@
 
 MAINBOARD_T g_tMain;
 
+static void MODS_Read_Host_Analysis_Info(void);
+
+
 /*
 *********************************************************************************************************
 *	                                   函数声明
@@ -63,7 +66,7 @@ const MODBUSBPS_T ModbusBaudRate[] =
 	{230400, 1750},
 };
 
-static void MODS_Read_Slave_Address_Info(void); //MODS -> Modbus - slave machine ,MODH--> host machine
+
 
 //static uint8_t g_mods_timeout = 0;
 MODS_T g_tModS = {0};
@@ -79,7 +82,7 @@ VAR_T g_tVar;
 */
 void MODS_Poll(void)
 {
-	uint16_t addr;
+
 	uint16_t crc1;
 
 #if 0
@@ -315,7 +318,7 @@ static void MODS_AnalyzeApp(void)
 static void MODS_AnalyzeApp(void)
 {
 
-  MODS_Read_Slave_Address_Info();
+  MODS_Read_Host_Analysis_Info();
 
 
 }
@@ -327,7 +330,7 @@ static void MODS_AnalyzeApp(void)
 *	返 回 值: 无
 *********************************************************************************************************
 */
-static void MODS_Read_Slave_Address_Info(void)
+static void MODS_Read_Host_Analysis_Info(void)
 {
     uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data;
 
@@ -339,12 +342,35 @@ static void MODS_Read_Slave_Address_Info(void)
 	   byte_len = g_tModS.RxBuf[3];
 	   byte_data = g_tModS.RxBuf[4];
 
-	 if(bytes_zero == 0 ){
 
-	   	Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
-	   
-	   switch (byte_fun_code)
-		{
+   //RS485 ANSWERING SIGNAL Grama Analysis
+	if( bytes_zero==0){
+		g_tModS.answering_signal_flag = rs485_answering_signal_data;
+
+		Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
+
+	}
+	else if(bytes_zero==0x01){ //slave itself to host machine signal 
+
+        if(g_tModS.rs485_send_signal_flag == rs485_send_err_fan_signal){
+		 g_tModS.answering_signal_flag = rs485_answering_signal_success;
+
+        }
+
+		if(g_tModS.rs485_send_signal_flag == rs485_send_err_ptc_signal){
+		 g_tModS.answering_signal_flag = rs485_answering_signal_success;
+
+        }
+
+   }
+
+
+
+	
+   if(g_tModS.answering_signal_flag == rs485_answering_signal_data){
+
+	switch (byte_fun_code)
+	{
 			case mod_power: //0x0101
 				
 				switch(byte_data){
@@ -439,9 +465,12 @@ static void MODS_Read_Slave_Address_Info(void)
 
 			
 	    }
+
+	  
+   	}
 		
-	}
- }
+}
+ 
 
 /********************************************************************************
 	**
@@ -459,6 +488,32 @@ void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t d
 	g_tModS.TxBuf[g_tModS.TxCount++] = fun_code;		/* 鍔熻兘鐮� 绛夌瀛愬紑鎴栬€呭叧闂� */	
 	g_tModS.TxBuf[g_tModS.TxCount++] = len;	/* 鏁版嵁闀垮害*/
 	g_tModS.TxBuf[g_tModS.TxCount++] = data;		/* 鏁版嵁 */
+	
+	//MODS_SendAckWithCRC();		/* 鍙戦€佹暟鎹紝鑷姩鍔燙RC */
+	MODS_SendWithCRC(g_tModS.TxBuf, g_tModS.TxCount);
+	
+	//g_tModH.RegNum = _num;		/* 瀵勫瓨鍣ㄤ釜鏁� */
+	//g_tModH.Reg02H = _reg;		/* 淇濆瓨02H鎸囦护涓殑瀵勫瓨鍣ㄥ湴鍧€锛屾柟渚垮搴旂瓟鏁版嵁杩涜鍒嗙被 */	
+
+
+
+}
+/********************************************************************************
+	**
+	*Function Name:void MODS_SendError_Signal(uint8_t err)
+	*Function: 
+	*Input Ref: error of data 0x01 -crc16 error,0xA0- fan fault,0xB0- ptc too hot
+	*Return Ref:NO
+	*
+*******************************************************************************/
+void MODS_SendError_Signal(uint8_t err)
+{
+	g_tModS.TxCount = 0;
+	g_tModS.TxBuf[g_tModS.TxCount++] = MASTER_ADDRESS;		/* 骞挎挱妯″紡 */
+	g_tModS.TxBuf[g_tModS.TxCount++] = cpuId.slave_address;  /* 搴旂瓟鍦板潃 */
+	g_tModS.TxBuf[g_tModS.TxCount++] = 0xff;		/* 鍔熻兘鐮� 绛夌瀛愬紑鎴栬€呭叧闂� */	
+	g_tModS.TxBuf[g_tModS.TxCount++] = 0x01;	/* 鏁版嵁闀垮害*/
+	g_tModS.TxBuf[g_tModS.TxCount++] = err;		/* 鏁版嵁 */
 	
 	//MODS_SendAckWithCRC();		/* 鍙戦€佹暟鎹紝鑷姩鍔燙RC */
 	MODS_SendWithCRC(g_tModS.TxBuf, g_tModS.TxCount);
