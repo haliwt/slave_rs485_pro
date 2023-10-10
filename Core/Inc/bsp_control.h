@@ -57,6 +57,7 @@ typedef struct {
 	uint8_t gTimer_fan_counter;
 	uint8_t gTimer_ptc_adc_times ;
 	uint8_t gTimer_fan_adc_times ;
+	uint8_t gTimer_fan_works_times ;
 	uint16_t gTimer_continuce_works_time ;
 	
 

@@ -95,6 +95,7 @@ void Mainboard_Run_Process_Handler(void)
 		PTC_IO_SetLow();
 		PLASMA_IO_SetLow();
 		HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);//ultrasnoic off
+		Buzzer_KeySound();
 
         }
         fan_continue_run();
@@ -129,6 +130,19 @@ static void Current_Works_State(void)
 		 break;
 
 		 case 1:
+
+             if(g_tMain.gTimer_fan_works_times > 32){
+			 	g_tMain.gTimer_fan_works_times =0;
+				if(g_tMain.gPtc ==1 || g_tMain.gPlasma ==1 || g_tMain.gUltrasonic ==1){
+
+					Fan_Run_Fun();
+
+	             }
+				 else if(g_tMain.gPtc ==0 &&  g_tMain.gPlasma ==0 && g_tMain.gUltrasonic ==0){
+					Fan_Stop();
+				 }
+
+             }
 		 	
 		 	 if(g_tMain.gPtc == 1){
 			    PTC_IO_SetHigh(); 
