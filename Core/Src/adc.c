@@ -254,7 +254,7 @@ void Get_Fan_Adc_Fun(uint32_t channel,uint8_t times)
     g_tMain.fan_detect_voltage  =(uint16_t)((adc_fan_hex * 3300)/4096); //amplification 1000 ,3.111V -> 3111
 	HAL_Delay(5);
 
-	if(g_tMain.fan_detect_voltage >300 &&  g_tMain.fan_detect_voltage < 1400){
+	if(g_tMain.fan_detect_voltage >300 &&  g_tMain.fan_detect_voltage < 2000){
            detect_error_times=0;
 		   #ifdef DEBUG
              printf("adc= %d",run_t.fan_detect_voltage);

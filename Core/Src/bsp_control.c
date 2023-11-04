@@ -94,6 +94,7 @@ void Mainboard_Run_Process_Handler(void)
 	    g_tMain.gPtc = 0;
 		g_tMain.gPlasma=0;
 		g_tMain.gUltrasonic =0;
+		g_tMain.gTimer_fan_counter=0;
 		PTC_IO_SetLow();
 		PLASMA_IO_SetLow();
 		HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);//ultrasnoic off
@@ -348,8 +349,9 @@ static void Works_Rest_Cycle_TenMinutes(void)
 
 static void Fan_Run_Fun(void)
 {
-    FAN_IO_RUN_SetHigh();
+    
 	FAN_IO_SetLow();
+	FAN_IO_RUN_SetHigh();
 
 }
 

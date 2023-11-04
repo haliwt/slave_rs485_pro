@@ -249,12 +249,18 @@ static void MODS_Read_Host_Analysis_Info(void)
    
 		  // Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
   }
+  else if(g_tPro.pro_addr == 0x001){ //host answering slave signal .
+
+      g_tModS.rs485_send_answering_signal_flag = rs485_answering_signal_data;
+
+  }
   else if(g_tPro.pro_addr == cpuId.slave_address){
 
        g_tModS.rs485_send_answering_signal_flag = rs485_answering_signal_data;
 	   Answerback_RS485_Signal(g_tPro.pro_local_addr,g_tPro.pro_fun_code,g_tPro.pro_data_len,g_tPro.pro_data);
 
-  }
+ }
+ 
 
   if(g_tModS.answering_signal_flag == rs485_broadcast_mode){
    

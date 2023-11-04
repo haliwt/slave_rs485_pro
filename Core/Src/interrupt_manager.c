@@ -27,6 +27,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		g_tMain.gTimer_continuce_works_time++ ;
 		g_tMain.gTimer_fan_works_times ++;
 		g_tMain.gTimer_compare_temp++;
+		
 	
 		
 	    
