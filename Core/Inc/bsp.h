@@ -69,7 +69,7 @@
 typedef struct _cpuId_{
 
    uint8_t cpu_id;
-   uint8_t slave_address;
+   uint16_t slave_address;
   
 
 }CPUID;
@@ -80,7 +80,8 @@ extern CPUID cpuId;
 
 
 /* 提供给其他C文件调用的函数 */
-//void bsp_Init(void);
+void bsp_Ref_Init(void);
+
 void bsp_Idle(void);
 
 void bsp_GetCpuID(void);

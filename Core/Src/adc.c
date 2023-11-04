@@ -220,21 +220,15 @@ void Get_PTC_Temperature_Voltage(uint32_t channel,uint8_t times)
 *****************************************************************/
 void Judge_PTC_Temperature_Value(void)
 {
-  //if(run_t.ptc_temp_voltage < 54 || run_t.ptc_temp_voltage ==54){ //75 degree
+  
    
-  //if(run_t.ptc_temp_voltage < 60 || run_t.ptc_temp_voltage ==60){ //70 degree
   if(g_tMain.ptc_temp_voltage < 373 || g_tMain.ptc_temp_voltage ==373){ //90 degree
 	    g_tMain.gPtc =0 ;
 	    PTC_IO_SetLow(); //turn off
 		g_tMain.ptc_warning =1;
-       // SendWifiCmd_To_Order(PTC_WARNING_ITEM);
-
-        Buzzer_KeySound();
-
-	    Buzzer_Ptc_Error_Sound();
-	    g_tModS.rs485_send_signal_flag = rs485_send_err_ptc_signal;
-	   MODS_SendError_Signal(0xB0);
-   	      
+    
+        Buzzer_Ptc_Error_Sound();
+	   
    }
    
 }
@@ -274,14 +268,8 @@ void Get_Fan_Adc_Fun(uint32_t channel,uint8_t times)
 			   		detect_error_times=0;
 		           g_tMain.fan_warning = 1;
 				
-			       Buzzer_Fan_Error_Sound();
-				   g_tModS.rs485_send_signal_flag = rs485_send_err_fan_signal;
-                  
-				   MODS_SendError_Signal(0xA0);
-				  
-				  
-
-			   	}
+			  
+			   }
 	           detect_error_times++;
 
      }

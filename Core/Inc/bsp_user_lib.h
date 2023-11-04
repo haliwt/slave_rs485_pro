@@ -22,6 +22,8 @@ void int_to_str(int _iNumber, char *_pBuf, unsigned char _len);
 int str_to_int(char *_pStr);
 
 uint16_t BEBufToUint16(uint8_t *_pBuf);
+uint16_t BEBufToUint16_Local(uint8_t *_pBuf);
+
 uint16_t LEBufToUint16(uint8_t *_pBuf);
 
 uint32_t BEBufToUint32(uint8_t *_pBuf);

@@ -10,8 +10,9 @@ void (* fan_continue_run)(void);
 static void Current_Works_State(void);
 static void Works_Rest_Cycle_TenMinutes(void);
 static void Fan_Run_Fun(void);
-static void Fan_Stop(void);
+//static void Fan_Stop(void);
 static void Fan_RunTenMinutes(void);
+static void CompareValue_Temperature(void);
 
 
 /*****************************************************************
@@ -58,6 +59,7 @@ void Mainboard_Run_Process_Handler(void)
 		g_tMain.ptc_warning =0;
 		g_tMain.fan_warning = 0;
 		g_tMain.gTimer_sensor_detect_times = 66;
+		g_tModS.rs485_send_answering_signal_flag = 0;
 		Buzzer_KeySound();
 	    g_tMain.rs485_Command_label= run_update_data;
     break;
@@ -89,9 +91,9 @@ void Mainboard_Run_Process_Handler(void)
 	    interval_time_stop_run =0;
         g_tMain.gTimer_continuce_works_time=0;
 		gFan_continueRun=1;
-	    g_tMain.gPtc = 1;
-		g_tMain.gPlasma=1;
-		g_tMain.gUltrasonic =1;
+	    g_tMain.gPtc = 0;
+		g_tMain.gPlasma=0;
+		g_tMain.gUltrasonic =0;
 		PTC_IO_SetLow();
 		PLASMA_IO_SetLow();
 		HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);//ultrasnoic off
@@ -99,6 +101,16 @@ void Mainboard_Run_Process_Handler(void)
 
         }
         fan_continue_run();
+
+
+	break;
+
+	case power_dc_power_on:
+
+	    PTC_IO_SetLow();
+		PLASMA_IO_SetLow();
+		HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);//ultrasnoic off
+		Fan_Stop();
 
 
 	break;
@@ -187,31 +199,37 @@ static void Current_Works_State(void)
 
 		 case 4:
 
-		   if(g_tMain.gTimer_ptc_adc_times > 45){
+		   if(g_tMain.gTimer_ptc_adc_times > 5){
 		      g_tMain.gTimer_ptc_adc_times =0;
 
 		     switch(g_tMain.ptc_warning ){
 
 			 case 0:
 	
-
+                
              	Get_PTC_Temperature_Voltage(ADC_CHANNEL_1,5);
 			 	Judge_PTC_Temperature_Value();
+			   
+			 
 
 		     
 			 break;
 
-			 case 1:
-			    if(g_tModS.rs485_send_signal_flag == rs485_send_err_ptc_signal){
-				  	
-				  	if(g_tModS.answering_signal_flag = rs485_answering_signal_success){
+			 case 1: //default be happed 
+			 	
+			    if( g_tModS.rs485_send_answering_signal_flag == 0){
 
-				        g_tMain.ptc_warning ++;
+				    
+				         MODS_SendHostError_Signal(0xB0);
+					     Buzzer_Ptc_Error_Sound();
 
-					}
+                      
+			    }
+				else{
+
+					g_tMain.ptc_warning ++;
 
 				}
-				else   g_tMain.ptc_warning=0;
 
 			 break;
 
@@ -229,7 +247,7 @@ static void Current_Works_State(void)
 
 		 case 5:
 
-		   if(g_tMain.gTimer_fan_adc_times > 36){
+		   if(g_tMain.gTimer_fan_adc_times > 8){
 
 		      g_tMain.gTimer_fan_adc_times =0;
 
@@ -244,15 +262,14 @@ static void Current_Works_State(void)
 
 			  case 1:
 			
-                 if(g_tModS.rs485_send_signal_flag == rs485_send_err_fan_signal){
+                 if( g_tModS.rs485_send_answering_signal_flag == 0){
 				  	
-					  if(g_tModS.answering_signal_flag = rs485_answering_signal_success){
-
-					        g_tMain.fan_warning ++;
-					  }
+				       MODS_SendHostError_Signal(0xA0);
+					   Buzzer_Fan_Error_Sound();
+                 	
 				 }
 				 else {
-				    g_tMain.fan_warning =0;
+				    g_tMain.fan_warning ++;
 
 
 				  }
@@ -275,7 +292,15 @@ static void Current_Works_State(void)
 
 		 break;
 
-		 case 6:
+		 case 6: //set up temperature value and compare sensor value 
+         
+		 CompareValue_Temperature();
+
+		 cycle_run =7;
+
+		 break;
+
+		 case 7:
 
 			if(g_tMain.gTimer_continuce_works_time > 7200){
 		     g_tMain.gTimer_continuce_works_time =0;
@@ -328,7 +353,7 @@ static void Fan_Run_Fun(void)
 
 }
 
-static void Fan_Stop(void)
+void Fan_Stop(void)
 {
 
 	FAN_IO_RUN_SetLow();
@@ -377,5 +402,60 @@ void Fan_Continue_RunTenMinutes(void (*fan_run)(void))
 
 }
 
+
+/*************************************************************
+*
+	 *Function Name:static void Fan_RunTenMinutes(void)
+	 *Function: function of pointer by special run function
+	 *Input Ref:NO		   
+	 *Return Ref:NO
+	 *
+
+**************************************************************/
+static void CompareValue_Temperature(void)
+{
+	static uint8_t set_temperature_value;
+
+	if(g_tMain.gTimer_compare_temp > 60){
+		g_tMain.gTimer_compare_temp =0;
+        if(g_tMain.read_temperature_value[0] >19 && g_tMain.read_temperature_value[0] < 41){
+               
+		 
+		  
+		if( g_tMain.gTemperature >= g_tMain.read_temperature_value[0] || g_tMain.gTemperature >40){//envirment temperature
+	  
+				g_tMain.gPtc = 0;
+                
+		       
+			    
+	   }
+	   else if((g_tMain.read_temperature_value[0] -3) >= g_tMain.gTemperature){
+
+
+           
+
+                g_tMain.gPtc = 1;
+        
+		  }
+	  
+	    
+	  }
+     else{ //no define set up temperature value 
+		if(g_tMain.gTemperature  >40 ){//envirment temperature
+			
+			g_tMain.gPtc = 0;
+		
+
+		}
+        else if(g_tMain.gTemperature  < 39){
+			
+			  g_tMain.gPtc = 1;
+             
+          }
+			    
+      }
+	}
+
+}
 
 

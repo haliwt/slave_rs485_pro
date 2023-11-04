@@ -2,6 +2,8 @@
 #define __MODBUY_SLAVE_H
 #include "main.h"
 
+#define PRO_HEAD        0xAA
+
 #define MASTER_ADDRESS 	0x01
 
 #define SBAUD485	UART1_BAUD
@@ -58,6 +60,8 @@ typedef struct
 	uint8_t rs485_RxInputBuf[1];
 	uint8_t Rx_rs485_data_flag;
 	uint8_t TxCount;
+	uint8_t rs485_send_answering_signal_flag;
+
 }MODS_T;
 
 extern MODS_T g_tModS;
@@ -66,19 +70,18 @@ extern MODS_T g_tModS;
 typedef struct
 {
 	/* 03H 06H 读写保持寄存器 */
-	uint16_t P01;
-	uint16_t P02;
+	uint8_t pro_head;
+	uint8_t pro_boadcast;
+	
+	uint8_t pro_fun_code;
+	uint8_t pro_data_len;
+	uint8_t pro_data;
 
-	/* 04H 读取模拟量寄存器 */
-	uint16_t A01;
+	uint16_t pro_addr;
+	uint16_t pro_local_addr;
 
-	/* 01H 05H 读写单个强制线圈 */
-	uint16_t D01;
-	uint16_t D02;
-	uint16_t D03;
-	uint16_t D04;
 
-}VAR_T;
+}Protocol_t;
 
 typedef enum{
 
@@ -94,12 +97,9 @@ typedef enum{
    rs485_receive_data_success,
    rs485_answering_signal_success,
    rs485_answering_signal_data,
+   rs485_broadcast_mode
    
- 
-
-
-
-}rs485_receive_state;
+ }rs485_receive_state;
 
 
 typedef enum {
@@ -111,7 +111,7 @@ typedef enum {
   mod_fan,
   mod_set_timer_power_on,
   mod_set_timer_power_off,
-  mod_set_temperature_value,
+  mod_set_temperature_value =0xb0,
   mod_fan_error,
   mod_ptc_error,
    
@@ -122,11 +122,12 @@ typedef enum {
 
 void MODS_Poll(void);
 
-extern VAR_T g_tVar;
+extern Protocol_t g_tPro;
 
 
-void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t data);
-void MODS_SendError_Signal(uint8_t err);
+void Answerback_RS485_Signal(uint16_t addr,uint8_t fun_code,uint8_t len,uint8_t data);
+void MODS_SendHostError_Signal(uint8_t err);
+
 
 
 #endif

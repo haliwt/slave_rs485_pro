@@ -3,6 +3,19 @@
 CPUID cpuId;
 
 
+void bsp_Ref_Init(void)
+{
+    static uint8_t cupid_times;
+	if(cupid_times==0){
+	  cupid_times++;
+	  bsp_GetCpuID();
+	  Buzzer_KeySound();
+
+	}
+
+}
+
+
 /*
 *********************************************************************************************************
 *	º¯ Êý Ãû: SystemClock_Config
@@ -30,36 +43,19 @@ CPUID cpuId;
 
 void bsp_GetCpuID(void)
 {
-  static uint8_t id;
+  static uint16_t id;
   uint32_t CPU_Sn0, CPU_Sn1, CPU_Sn2;
-  uint8_t i;
+
  /* æ£€æµ‹CPU ID */
 	
 	  
 	   CPU_Sn0 =  HAL_GetUIDw0();
-	   CPU_Sn1 =  HAL_GetUIDw1();
-	   CPU_Sn2 =  HAL_GetUIDw2();
+	  // CPU_Sn1 =  HAL_GetUIDw1();
+	  // CPU_Sn2 =  HAL_GetUIDw2();
 
-		//printf("CPU : STM32H743XIH6, BGA240, ä¸»é¢‘: %dMHz\r\n", SystemCoreClock / 1000000);
-		//printf("UID = %08X %08X %08X\r\n", CPU_Sn2, CPU_Sn1, CPU_Sn0);
 	
-
-
-   do{
-   	 i++;
-	 if(i==0)
-	   id = (uint8_t)CPU_Sn0 + (uint8_t)CPU_Sn1 + (uint8_t)CPU_Sn2;
-	 else if(i==1)
-       id = (uint8_t)CPU_Sn0 + (uint8_t)CPU_Sn1 +(uint8_t)(CPU_Sn2 >> 8);
-	 else if(i==2)
-       id = (uint8_t)CPU_Sn0 + (uint8_t)CPU_Sn1 +(uint8_t)(CPU_Sn2 >> 16);
-	 else if(i==3) id=10;
-
-
-   }while(id ==0);
-
-
-   cpuId.slave_address = id;
+       id = (uint16_t)CPU_Sn0 ;
+	   cpuId.slave_address = id;
 }
 
 

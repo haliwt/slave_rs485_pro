@@ -2,6 +2,8 @@
 #include "modbus_slave.h"
 
 MAINBOARD_T g_tMain;
+Protocol_t  g_tPro;
+
 
 static void MODS_Read_Host_Analysis_Info(void);
 
@@ -69,8 +71,8 @@ const MODBUSBPS_T ModbusBaudRate[] =
 
 
 //static uint8_t g_mods_timeout = 0;
-MODS_T g_tModS = {0};
-VAR_T g_tVar;
+MODS_T g_tModS ;
+
 
 /*
 *********************************************************************************************************
@@ -85,42 +87,11 @@ void MODS_Poll(void)
 
 	uint16_t crc1;
 
-#if 0
-	
-	/* ³¬¹ı3.5¸ö×Ö·ûÊ±¼äºóÖ´ĞĞMODH_RxTimeOut()º¯Êı¡£È«¾Ö±äÁ¿ g_rtu_timeout = 1; Í¨ÖªÖ÷³ÌĞò¿ªÊ¼½âÂë */
-//	if (g_mods_timeout == 0)	
-//	{
-//		return;								/* Ã»ÓĞ³¬Ê±£¬¼ÌĞø½ÓÊÕ¡£²»ÒªÇåÁã g_tModS.RxCount */
-//	}
-//	
-//	g_mods_timeout = 0;	 					/* Çå±êÖ¾ */
-
-	if (g_tModS.RxCount < 7)				/* ½ÓÊÕµ½µÄÊı¾İĞ¡ÓÚ4¸ö×Ö½Ú¾ÍÈÏÎª´íÎó£¬µØÖ·£¨8bit£©+Ö¸Áî£¨8bit£©+²Ù×÷¼Ä´æÆ÷£¨16bit£© */
-	{
-		goto err_ret;
-	}
-
-	/* ¼ÆËãCRCĞ£ÑéºÍ£¬ÕâÀïÊÇ½«½ÓÊÕµ½µÄÊı¾İ°üº¬CRC16ÖµÒ»Æğ×öCRC16£¬½á¹ûÊÇ0£¬±íÊ¾ÕıÈ·½ÓÊÕ */
-	crc1 = CRC16_Modbus(g_tModS.RxBuf, g_tModS.RxCount);
-	if (crc1 != 0)
-	{
-		goto err_ret;
-	}
-
-	/* Õ¾µØÖ· (1×Ö½Ú£© */
-	addr = g_tModS.RxBuf[0];				/* µÚ1×Ö½Ú Õ¾ºÅ */
-	if (addr != MASTER_ADDRESS && addr !=0)		 			/* ÅĞ¶ÏÖ÷»ú·¢ËÍµÄÃüÁîµØÖ·ÊÇ·ñ·ûºÏ */
-	{
-		goto err_ret;
-	}
-
-	/* ·ÖÎöÓ¦ÓÃ²ãĞ­Òé */
-	MODS_AnalyzeApp();						
-	
-err_ret:
-	g_tModS.RxCount = 0;					/* ±ØĞëÇåÁã¼ÆÊıÆ÷£¬·½±ãÏÂ´ÎÖ¡Í¬²½ */
-    #endif 
   if(g_tModS.Rx_rs485_data_flag ==  rs485_receive_data_success){
+
+       g_tPro.pro_addr = BEBufToUint16(g_tModS.RxBuf); //å¤§ç«¯æ•°æ®å‘é€ ,1,2
+	   g_tPro.pro_local_addr = BEBufToUint16(g_tModS.RxBuf); /* å¤§ç«¯æ•°æ®ï¼Œ3ï¼Œ4 */
+  	    
 		/* è®¡ç®—CRCæ ¡éªŒå’Œï¼Œè¿™é‡Œæ˜¯å°†æ¥æ”¶åˆ°çš„æ•°æ®åŒ…å«CRC16å€¼ä¸€èµ·åšCRC16ï¼Œç»“æœæ˜¯0ï¼Œè¡¨ç¤ºæ­£ç¡®æ¥æ”¶ */
 		crc1 = CRC16_Modbus(g_tModS.RxBuf,g_tModS.RxCount);
 		if (crc1 != 0)
@@ -132,20 +103,26 @@ err_ret:
 		}
 		else{
         	crc16_check_flag = 1;
-			g_tModS.Rx_rs485_data_flag=0;
-		    g_tModS.RxCount =0;
-		    
-
-		}
+			
+		    }
     }
 	if(crc16_check_flag==1){
 		/* åˆ†æåº”ç”¨å±‚åè®® */
 		MODS_AnalyzeApp();
 		crc16_check_flag=0;
+	    g_tModS.Rx_rs485_data_flag=0;
+		g_tModS.RxCount =0;
 	 
 	
    	}
 	
+}
+static void MODS_AnalyzeApp(void)
+{
+
+  MODS_Read_Host_Analysis_Info();
+
+
 }
 
 /*
@@ -186,28 +163,16 @@ void MODS_ReciveNew(uint8_t _byte)
 	}
 }
 
-/*
-*********************************************************************************************************
-*	º¯ Êı Ãû: MODS_RxTimeOut
-*	¹¦ÄÜËµÃ÷: ³¬¹ı3.5¸ö×Ö·ûÊ±¼äºóÖ´ĞĞ±¾º¯Êı¡£ ÉèÖÃÈ«¾Ö±äÁ¿ g_mods_timeout = 1£¬Í¨ÖªÖ÷³ÌĞò¿ªÊ¼½âÂë¡£
-*	ĞÎ    ²Î: ÎŞ
-*	·µ »Ø Öµ: ÎŞ
-*********************************************************************************************************
-*/
-//static void MODS_RxTimeOut(void)
-//{
-//	g_mods_timeout = 1;
-//}
 
-/*
-*********************************************************************************************************
-*	º¯ Êı Ãû: MODS_SendWithCRC
-*	¹¦ÄÜËµÃ÷: ·¢ËÍÒ»´®Êı¾İ, ×Ô¶¯×·¼Ó2×Ö½ÚCRC
-*	ĞÎ    ²Î: _pBuf Êı¾İ£»
-*			  _ucLen Êı¾İ³¤¶È£¨²»´øCRC£©
-*	·µ »Ø Öµ: ÎŞ
-*********************************************************************************************************
-*/
+/*******************************************************************************************************
+	*
+	*	º¯ Êı Ãû: MODS_SendWithCRC
+	*	¹¦ÄÜËµÃ÷: ·¢ËÍÒ»´®Êı¾İ, ×Ô¶¯×·¼Ó2×Ö½ÚCRC
+	*	ĞÎ    ²Î: _pBuf Êı¾İ£»
+	*			  _ucLen Êı¾İ³¤¶È£¨²»´øCRC£©
+	*	·µ »Ø Öµ: ÎŞ
+	*
+*********************************************************************************************************/
 static void MODS_SendWithCRC(uint8_t *_pBuf, uint8_t _ucLen)
 {
 	uint16_t crc;
@@ -221,14 +186,12 @@ static void MODS_SendWithCRC(uint8_t *_pBuf, uint8_t _ucLen)
 	RS485_SendBuf(buf, _ucLen);
 }
 #if 0
-/*
-*********************************************************************************************************
+/********************************************************************************************************
 *	º¯ Êı Ãû: MODS_SendAckErr
 *	¹¦ÄÜËµÃ÷: ·¢ËÍ´íÎóÓ¦´ğ
 *	ĞÎ    ²Î: _ucErrCode : ´íÎó´úÂë
 *	·µ »Ø Öµ: ÎŞ
-*********************************************************************************************************
-*/
+**********************************************************************************************************/
 static void MODS_SendAckErr(uint8_t _ucErrCode)
 {
 	uint8_t txbuf[3];
@@ -260,120 +223,48 @@ static void MODS_SendAckOk(void)
 	MODS_SendWithCRC(txbuf, 6);
 }
 #endif 
-/*
-*********************************************************************************************************
-*	º¯ Êı Ãû: MODS_AnalyzeApp
-*	¹¦ÄÜËµÃ÷: ·ÖÎöÓ¦ÓÃ²ãĞ­Òé
-*	ĞÎ    ²Î: ÎŞ
-*	·µ »Ø Öµ: ÎŞ
-*********************************************************************************************************
-*/
-#if 0
-static void MODS_AnalyzeApp(void)
-{
-	switch (g_tModS.RxBuf[1])				/* µÚ2¸ö×Ö½Ú ¹¦ÄÜÂë */
-	{
-		case 0x01:							/* ¶ÁÈ¡ÏßÈ¦×´Ì¬£¨´ËÀı³ÌÓÃled´úÌæ£©*/
-			MODS_01H();
-			bsp_PutMsg(MSG_MODS_01H, 0);	/* ·¢ËÍÏûÏ¢,Ö÷³ÌĞò´¦Àí */
-			break;
 
-		case 0x02:							/* ¶ÁÈ¡ÊäÈë×´Ì¬£¨°´¼ü×´Ì¬£©*/
-			MODS_02H();
-			//bsp_PutMsg(MSG_MODS_02H, 0);
-			break;
-		
-		case 0x03:							/* ¶ÁÈ¡±£³Ö¼Ä´æÆ÷£¨´ËÀı³Ì´æÔÚg_tVarÖĞ£©*/
-			MODS_03H();
-			//bsp_PutMsg(MSG_MODS_03H, 0);
-			break;
-		
-		case 0x04:							/* ¶ÁÈ¡ÊäÈë¼Ä´æÆ÷£¨ADCµÄÖµ£©*/
-			MODS_04H();
-			//bsp_PutMsg(MSG_MODS_04H, 0);
-			break;
-		
-		case 0x05:							/* Ç¿ÖÆµ¥ÏßÈ¦£¨ÉèÖÃled£©*/
-			MODS_05H();
-			//bsp_PutMsg(MSG_MODS_05H, 0);
-			break;
-		
-		case 0x06:							/* Ğ´µ¥¸ö±£´æ¼Ä´æÆ÷£¨´ËÀı³Ì¸ÄĞ´g_tVarÖĞµÄ²ÎÊı£©*/
-			MODS_06H();	
-			//bsp_PutMsg(MSG_MODS_06H, 0);
-			break;
-			
-		case 0x10:							/* Ğ´¶à¸ö±£´æ¼Ä´æÆ÷£¨´ËÀı³Ì´æÔÚg_tVarÖĞµÄ²ÎÊı£©*/
-			MODS_10H();
-			//bsp_PutMsg(MSG_MODS_10H, 0);
-			break;
-		
-		default:
-			//g_tModS.RspCode = RSP_ERR_CMD;
-			MODS_SendAckErr(g_tModS.RspCode);	/* ¸æËßÖ÷»úÃüÁî´íÎó */
-			break;
-	}
-}
-#endif
-static void MODS_AnalyzeApp(void)
-{
-
-  MODS_Read_Host_Analysis_Info();
-
-
-}
-/*
-*********************************************************************************************************
-*	º¯ Êı Ãû: MODS_01H
-*	¹¦ÄÜËµÃ÷: ¶ÁÈ¡ÏßÈ¦×´Ì¬£¨¶ÔÓ¦Ô¶³Ì¿ª¹ØD01/D02/D03£©
-*	ĞÎ    ²Î: ÎŞ
-*	·µ »Ø Öµ: ÎŞ
-*********************************************************************************************************
-*/
+/*******************************************************************************************************
+*
+*	Function Name: MODS_01H
+*	Function: ¶ÁÈ¡ÏßÈ¦×´Ì¬£¨¶ÔÓ¦Ô¶³Ì¿ª¹ØD01/D02/D03£©
+*	Input Ref: ÎŞ
+*	Return Ref: ÎŞ
+*
+********************************************************************************************************/
 static void MODS_Read_Host_Analysis_Info(void)
 {
-    uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data;
-
-
-	  
-	   bytes_zero = g_tModS.RxBuf[0];	/* 0x00 å¹¿æ’­æ¨¡å¼ */
-	   byte_load_addr = g_tModS.RxBuf[1]; /* ä¸»æœº  åœ°å€   0x01*/
-	   byte_fun_code = g_tModS.RxBuf[2];
-	   byte_len = g_tModS.RxBuf[3];
-	   byte_data = g_tModS.RxBuf[4];
+   
+	   
+	   g_tPro.pro_fun_code = g_tModS.RxBuf[5]; /* ä¸»æœº  åœ°å€   0x01*/
+	   g_tPro.pro_data_len = g_tModS.RxBuf[6];
+	   g_tPro.pro_data = g_tModS.RxBuf[7];
 
 
    //RS485 ANSWERING SIGNAL Grama Analysis
-	if( bytes_zero==0){
-		g_tModS.answering_signal_flag = rs485_answering_signal_data;
+  if(g_tPro.pro_addr ==0x5555){//broadcast mode
+   
+          g_tModS.answering_signal_flag = rs485_broadcast_mode;
+		  g_tPro.pro_addr = 0;
+   
+		  // Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
+  }
+  else if(g_tPro.pro_addr == cpuId.slave_address){
 
-		Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
+       g_tModS.rs485_send_answering_signal_flag = rs485_answering_signal_data;
+	   Answerback_RS485_Signal(g_tPro.pro_local_addr,g_tPro.pro_fun_code,g_tPro.pro_data_len,g_tPro.pro_data);
 
-	}
-	else if(bytes_zero==0x01){ //slave itself to host machine signal 
+  }
 
-        if(g_tModS.rs485_send_signal_flag == rs485_send_err_fan_signal){
-		 g_tModS.answering_signal_flag = rs485_answering_signal_success;
-
-        }
-
-		if(g_tModS.rs485_send_signal_flag == rs485_send_err_ptc_signal){
-		 g_tModS.answering_signal_flag = rs485_answering_signal_success;
-
-        }
-
-   }
-
+  if(g_tModS.answering_signal_flag == rs485_broadcast_mode){
+   
+ 
+   switch(g_tPro.pro_fun_code){
 
 
-	
-   if(g_tModS.answering_signal_flag == rs485_answering_signal_data){
-
-	switch (byte_fun_code)
-	{
-			case mod_power: //0x0101
+			case mod_power: //0x01
 				
-				switch(byte_data){
+				switch(g_tPro.pro_data){
 
                    case 0:
                        
@@ -389,14 +280,14 @@ static void MODS_Read_Host_Analysis_Info(void)
 				   break;
 
 				}	
-					
+				g_tModS.answering_signal_flag = 0xff;
 	        break;
 
 			case mod_ptc:
 
 			   if(g_tMain.gPower_On == power_on){
 			  
-			   switch(byte_data){
+			   switch(g_tPro.pro_data){
 
                    case 0:
                       g_tMain.gPtc = 0;
@@ -412,13 +303,14 @@ static void MODS_Read_Host_Analysis_Info(void)
 				}	
                
 			   }
+			   g_tModS.answering_signal_flag = 0xff;
 			break;
 
 			case mod_plasma:
 
 				 if(g_tMain.gPower_On == power_on){
 			   
-			     switch(byte_data){
+			     switch(g_tPro.pro_data){
 
                    case 0:
                   g_tMain.gPlasma=0; 
@@ -435,14 +327,14 @@ static void MODS_Read_Host_Analysis_Info(void)
 				}	
               
 				}
-
+				g_tModS.answering_signal_flag = 0xff;
 			break;
 
 			case mod_ulrasonic:
 
 			    if(g_tMain.gPower_On == power_on){
 				
-				 switch(byte_data){
+				 switch(g_tPro.pro_data){
 
                    case 0:
                        g_tMain.gUltrasonic = 0;
@@ -460,6 +352,14 @@ static void MODS_Read_Host_Analysis_Info(void)
                
 
 			   }
+				g_tModS.answering_signal_flag = 0xff;
+			break;
+
+			case mod_set_temperature_value:
+				
+				 g_tMain.read_temperature_value[0] =  g_tPro.pro_data;
+				 g_tMain.gTimer_compare_temp = 62;
+			     g_tModS.answering_signal_flag = 0xff;
 
 			break;
 
@@ -468,10 +368,7 @@ static void MODS_Read_Host_Analysis_Info(void)
 
 	  
    	}
-		
 }
- 
-
 /********************************************************************************
 	**
 	*Function Name:
@@ -480,11 +377,14 @@ static void MODS_Read_Host_Analysis_Info(void)
 	*Return Ref:NO
 	*
 *******************************************************************************/
-void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t data)
+void Answerback_RS485_Signal(uint16_t addr,uint8_t fun_code,uint8_t len,uint8_t data)
 {
 	g_tModS.TxCount = 0;
-	g_tModS.TxBuf[g_tModS.TxCount++] = 0x0;		/* å¹¿æ’­æ¨¡å¼ */
-	g_tModS.TxBuf[g_tModS.TxCount++] = MASTER_ADDRESS;  /* åº”ç­”åœ°å€ */
+	g_tModS.TxBuf[g_tModS.TxCount++] = PRO_HEAD;
+    g_tModS.TxBuf[g_tModS.TxCount++] = 0x0;		/* host address */
+	g_tModS.TxBuf[g_tModS.TxCount++] = MASTER_ADDRESS;  /* host address */
+	g_tModS.TxBuf[g_tModS.TxCount++] = addr >> 8;  /* slave address */
+	g_tModS.TxBuf[g_tModS.TxCount++] = addr ;  /* åº”ç­”åœ°å€ low byte of address */
 	g_tModS.TxBuf[g_tModS.TxCount++] = fun_code;		/* åŠŸèƒ½ç „1¤7 ç­‰ç¦»å­å¼€æˆ–è¢ã…å…³é—„1¤7 */	
 	g_tModS.TxBuf[g_tModS.TxCount++] = len;	/* æ•°æ®é•¿åº¦*/
 	g_tModS.TxBuf[g_tModS.TxCount++] = data;		/* æ•°æ® */
@@ -506,22 +406,23 @@ void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t d
 	*Return Ref:NO
 	*
 *******************************************************************************/
-void MODS_SendError_Signal(uint8_t err)
+void MODS_SendHostError_Signal(uint8_t err)
 {
 	g_tModS.TxCount = 0;
+	g_tModS.TxBuf[g_tModS.TxCount++] = PRO_HEAD;
+	g_tModS.TxBuf[g_tModS.TxCount++] = 0x00;
 	g_tModS.TxBuf[g_tModS.TxCount++] = MASTER_ADDRESS;		/* å¹¿æ’­æ¨¡å¼ */
-	g_tModS.TxBuf[g_tModS.TxCount++] = cpuId.slave_address;  /* åº”ç­”åœ°å€ */
-	g_tModS.TxBuf[g_tModS.TxCount++] = 0xff;		/* åŠŸèƒ½ç „1¤7 ç­‰ç¦»å­å¼€æˆ–è¢ã…å…³é—„1¤7 */	
+	g_tModS.TxBuf[g_tModS.TxCount++] = cpuId.slave_address >> 8;  /* åº”ç­”åœ°å€ */
+	g_tModS.TxBuf[g_tModS.TxCount++] = cpuId.slave_address ;  /* åº”ç­”åœ°å€ low byte of address */
+	g_tModS.TxBuf[g_tModS.TxCount++] = 0xff;	/* function: error of code */	
 	g_tModS.TxBuf[g_tModS.TxCount++] = 0x01;	/* æ•°æ®é•¿åº¦*/
-	g_tModS.TxBuf[g_tModS.TxCount++] = err;		/* æ•°æ® */
+	g_tModS.TxBuf[g_tModS.TxCount++] = err;		/* erroræ•°æ® */
 	
 	//MODS_SendAckWithCRC();		/* å‘é¢ãæ•°æ®ï¼Œè‡ªåŠ¨åŠ CRC */
 	MODS_SendWithCRC(g_tModS.TxBuf, g_tModS.TxCount);
 	
-	//g_tModH.RegNum = _num;		/* å¯„å­˜å™¨ä¸ªæ•„1¤7 */
+	g_tModS.rs485_send_answering_signal_flag = 0;		/* å¯„å­˜å™¨ä¸ªæ•„1¤7 */
 	//g_tModH.Reg02H = _reg;		/* ä¿å­˜02HæŒ‡ä»¤ä¸­çš„å¯„å­˜å™¨åœ°å¢ãï¼Œæ–¹ä¾¿å¯¹åº”ç­”æ•°æ®è¿›è¡Œåˆ†ç±» */	
-
-
 
 }
 

@@ -18,7 +18,8 @@
 
 typedef enum{
   
-  power_off = 0x01,
+  power_dc_power_on,
+  power_off ,
   power_on,
   run_update_data
 
@@ -47,11 +48,12 @@ typedef struct {
 	//fault 
 	uint8_t fan_warning ;
 	uint8_t ptc_warning;
+	uint8_t read_temperature_value[1];
 
 	
 
 	//void (*fan_continue_run)(void); 	/* fan ren ten minutes and stop */
-	
+	uint8_t gTimer_compare_temp;
     uint8_t gTimer_iwdg_feed_times;
 	uint8_t gTimer_sensor_detect_times;
 	uint8_t gTimer_fan_counter;
@@ -77,6 +79,7 @@ void Mainboard_Run_Process_Handler(void);
 
 void Fan_Continue_RunTenMinutes(void (*fan_run)(void));
 
+void Fan_Stop(void);
 
 
 

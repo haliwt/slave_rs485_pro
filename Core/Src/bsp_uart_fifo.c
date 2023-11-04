@@ -25,7 +25,7 @@ static void UartIRQ(UART_T *_pUart);
 
 void RS485_InitTXE(void);
 
-
+uint8_t rx_flag;
 
 
 /*
@@ -493,16 +493,25 @@ static void UartIRQ(UART_T *_pUart)
 //			_pUart->usRxCount++;
 //		}
         g_tModS.rs485_RxInputBuf[0]=USART1->RDR;
-		g_tModS.RxBuf[g_tModS.RxCount] = g_tModS.rs485_RxInputBuf[0];
-		g_tModS.RxCount++;
-
-        if(g_tModS.RxCount == 7){
-		  g_tModS.Rx_rs485_data_flag = 1;
-
-
+        if(rx_flag ==0 && g_tModS.Rx_rs485_data_flag == 0){
+           if(g_tModS.rs485_RxInputBuf[0]==0xAA){
+		   	rx_flag ++;
+		   	g_tModS.RxCount=0;
+           }
 
 		}
-		
+		if(rx_flag ==1 ){
+			g_tModS.RxBuf[g_tModS.RxCount] = g_tModS.rs485_RxInputBuf[0];
+			g_tModS.RxCount++;
+      
+	        if(g_tModS.RxCount == 10){
+			  rx_flag =0;
+			  g_tModS.Rx_rs485_data_flag = 1;
+
+
+
+			}
+		}
 
 		/* 回调函数,通知应用程序收到新数据,一般是发送1个消息或者设置一个标记 */
 		//if (_pUart->usRxWrite == _pUart->usRxRead)
@@ -514,7 +523,7 @@ static void UartIRQ(UART_T *_pUart)
 //			}
 //		}
 	}
-    UART_Start_Receive_IT(&huart1,g_tModS.rs485_RxInputBuf,0x07);
+    UART_Start_Receive_IT(&huart1,g_tModS.rs485_RxInputBuf,10);
 	/* 处理发送缓冲区空中断 */
 	if ( ((isrflags & USART_ISR_TXE_TXFNF) != RESET) && (cr1its & USART_CR1_TXEIE_TXFNFIE) != RESET)
 	{

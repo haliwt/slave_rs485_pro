@@ -33,7 +33,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
- uint8_t cupid_times;
+
 
 
 /* USER CODE END PTD */
@@ -78,7 +78,8 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+
+	HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -107,7 +108,7 @@ int main(void)
    bsp_Init();
   /* USER CODE END 2 */
    HAL_TIM_Base_Start_IT(&htim17);
-  UART_Start_Receive_IT(&huart1, g_tModS.rs485_RxInputBuf,0x07);
+  UART_Start_Receive_IT(&huart1, g_tModS.rs485_RxInputBuf,10);
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -115,11 +116,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	if(cupid_times==0){
-	  cupid_times++;
-	  bsp_GetCpuID();
-
-	}
+	bsp_Ref_Init();
     
 	bsp_Idle(); /* Modbus解析在此函数里面 */
 	Mainboard_Run_Process_Handler();
